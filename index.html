@@ -1,0 +1,2889 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>Staff Portal — Durga Shankar is God</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    :root {
+      --saffron: #FF6B00;
+      --gold: #FFB300;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #f0f2f8;
+      color: #1e293b;
+    }
+
+    /* Sidebar */
+    #sidebar {
+      position: fixed;
+      top: 0;
+      left: -290px;
+      width: 290px;
+      height: 100vh;
+      background: linear-gradient(180deg, #12071f 0%, #1e0d36 60%, #12071f 100%);
+      z-index: 1000;
+      transition: left .35s cubic-bezier(.4, 0, .2, 1);
+      display: flex;
+      flex-direction: column;
+      box-shadow: 4px 0 32px rgba(0, 0, 0, .4);
+    }
+
+    #sidebar.open {
+      left: 0;
+    }
+
+    .sb-logo {
+      padding: 26px 22px 14px;
+      border-bottom: 1px solid rgba(255, 179, 0, .18);
+      background: linear-gradient(135deg, rgba(255, 107, 0, .12), rgba(255, 179, 0, .06));
+    }
+
+    .sb-logo h2 {
+      color: var(--gold);
+      font-size: .76rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+
+    .sb-logo p {
+      color: rgba(255, 255, 255, .45);
+      font-size: .7rem;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      padding: 13px 22px;
+      cursor: pointer;
+      transition: all .2s;
+      color: rgba(255, 255, 255, .65);
+      border-left: 3px solid transparent;
+    }
+
+    .nav-item:hover {
+      background: rgba(255, 179, 0, .09);
+      color: #fff;
+      border-left-color: rgba(255, 179, 0, .4);
+    }
+
+    .nav-item.active {
+      background: rgba(255, 107, 0, .16);
+      color: var(--gold);
+      border-left-color: var(--saffron);
+    }
+
+    .nav-icon {
+      width: 34px;
+      height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, .05);
+      border-radius: 9px;
+      flex-shrink: 0;
+    }
+
+    .nav-item.active .nav-icon {
+      background: rgba(255, 107, 0, .2);
+    }
+
+    .nav-lbl {
+      font-size: .86rem;
+      font-weight: 500;
+      line-height: 1.2;
+    }
+
+    .nav-sub {
+      font-size: .68rem;
+      color: rgba(255, 255, 255, .3);
+      margin-top: 1px;
+    }
+
+    .nav-item.active .nav-sub {
+      color: rgba(255, 179, 0, .55);
+    }
+
+    .sb-footer {
+      margin-top: auto;
+      padding: 14px 22px;
+      border-top: 1px solid rgba(255, 179, 0, .08);
+      font-size: .66rem;
+      color: rgba(255, 255, 255, .25);
+      text-align: center;
+    }
+
+    /* Overlay */
+    #overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .48);
+      z-index: 999;
+      display: none;
+      backdrop-filter: blur(2px);
+    }
+
+    #overlay.show {
+      display: block;
+    }
+
+    /* Topbar */
+    #topbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 58px;
+      z-index: 900;
+      background: #fff;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      padding: 0 18px;
+      gap: 14px;
+      box-shadow: 0 1px 14px rgba(0, 0, 0, .06);
+    }
+
+    #menu-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 7px;
+      border-radius: 8px;
+      color: #334155;
+    }
+
+    #menu-btn:hover {
+      background: #f1f5f9;
+    }
+
+    .tb-title {
+      font-weight: 800;
+      font-size: .95rem;
+      color: #1e293b;
+    }
+
+    .tb-sub {
+      font-size: .68rem;
+      color: var(--saffron);
+      font-weight: 700;
+      letter-spacing: .8px;
+    }
+
+    .tb-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .page-badge {
+      background: linear-gradient(90deg, var(--saffron), var(--gold));
+      color: #fff;
+      padding: 3px 11px;
+      border-radius: 20px;
+      font-size: .7rem;
+      font-weight: 700;
+    }
+
+    /* Main */
+    #main {
+      margin-top: 58px;
+      min-height: calc(100vh - 58px);
+    }
+
+    .page {
+      display: none;
+      padding: 22px;
+    }
+
+    .page.active {
+      display: block;
+      animation: fadeIn .3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px)
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0)
+      }
+    }
+
+    /* Cards */
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 2px 18px rgba(0, 0, 0, .055);
+      padding: 22px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      border: none;
+      border-radius: 10px;
+      padding: 9px 18px;
+      font-weight: 700;
+      font-size: .82rem;
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .btn-p {
+      background: linear-gradient(135deg, var(--saffron), var(--gold));
+      color: #fff;
+    }
+
+    .btn-p:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(255, 107, 0, .35);
+    }
+
+    .btn-s {
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid #e2e8f0;
+    }
+
+    .btn-s:hover {
+      background: #e2e8f0;
+    }
+
+    .btn-g {
+      background: linear-gradient(135deg, #059669, #10b981);
+      color: #fff;
+    }
+
+    .btn-g:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-r {
+      background: linear-gradient(135deg, #dc2626, #ef4444);
+      color: #fff;
+    }
+
+    .btn-b {
+      background: linear-gradient(135deg, #2563eb, #3b82f6);
+      color: #fff;
+    }
+
+    /* Inputs */
+    .fi {
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 9px 13px;
+      font-size: .85rem;
+      color: #1e293b;
+      transition: border-color .2s;
+      background: #fff;
+      width: 100%;
+    }
+
+    .fi:focus {
+      outline: none;
+      border-color: var(--saffron);
+      box-shadow: 0 0 0 3px rgba(255, 107, 0, .1);
+    }
+
+    .fsel {
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 9px 13px;
+      font-size: .85rem;
+      color: #1e293b;
+      background: #fff;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .fsel:focus {
+      outline: none;
+      border-color: var(--saffron);
+    }
+
+    .flabel {
+      font-size: .72rem;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-bottom: 5px;
+      display: block;
+    }
+
+    .frow {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .fgroup {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 20px;
+      font-size: .66rem;
+      font-weight: 700;
+    }
+
+    .bg-green {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .bg-amber {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .bg-red {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .bg-blue {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+
+    .bg-purple {
+      background: #ede9fe;
+      color: #5b21b6;
+    }
+
+    .bg-gray {
+      background: #f1f5f9;
+      color: #475569;
+    }
+
+    /* Toggle */
+    .tog {
+      position: relative;
+      display: inline-block;
+      width: 42px;
+      height: 23px;
+    }
+
+    .tog input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .tog-sl {
+      position: absolute;
+      inset: 0;
+      background: #cbd5e1;
+      border-radius: 23px;
+      cursor: pointer;
+      transition: .3s;
+    }
+
+    .tog-sl::before {
+      content: '';
+      position: absolute;
+      width: 17px;
+      height: 17px;
+      left: 3px;
+      bottom: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: .3s;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .2);
+    }
+
+    input:checked+.tog-sl {
+      background: var(--saffron);
+    }
+
+    input:checked+.tog-sl::before {
+      transform: translateX(19px);
+    }
+
+    /* Upload zone */
+    .upzone {
+      border: 2px dashed #cbd5e1;
+      border-radius: 14px;
+      padding: 32px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+      background: #f8fafc;
+    }
+
+    .upzone:hover,
+    .upzone.drag-over {
+      border-color: var(--saffron);
+      background: #fff9f5;
+    }
+
+    /* Metric pill */
+    .mpill {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 13px 18px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .mval {
+      font-size: 1.2rem;
+      font-weight: 800;
+    }
+
+    .mlbl {
+      font-size: .66rem;
+      color: #64748b;
+      font-weight: 600;
+      letter-spacing: .5px;
+      margin-top: 2px;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 22px;
+      right: 22px;
+      background: #1e293b;
+      color: #fff;
+      padding: 13px 18px;
+      border-radius: 12px;
+      font-size: .82rem;
+      font-weight: 500;
+      z-index: 9999;
+      transform: translateY(80px);
+      transition: transform .35s cubic-bezier(.4, 0, .2, 1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, .25);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+    }
+
+    .toast.success {
+      border-left: 4px solid #10b981;
+    }
+
+    .toast.error {
+      border-left: 4px solid #ef4444;
+    }
+
+    .toast.info {
+      border-left: 4px solid var(--saffron);
+    }
+
+    /* Modal */
+    .modal-ov {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .52);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      display: none;
+      backdrop-filter: blur(3px);
+    }
+
+    .modal-ov.show {
+      display: flex;
+    }
+
+    .modal-box {
+      background: #fff;
+      border-radius: 20px;
+      padding: 28px;
+      width: 92%;
+      max-width: 500px;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, .22);
+      animation: fadeIn .25s ease;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    /* Split pane (bank) */
+    .split-panes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .sp-credit {
+      border: 2px solid #6ee7b7;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .sp-debit {
+      border: 2px solid #fca5a5;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .sp-head {
+      padding: 11px 15px;
+      font-weight: 700;
+      font-size: .78rem;
+      letter-spacing: .4px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .sp-credit .sp-head {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .sp-debit .sp-head {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .sp-body {
+      max-height: 480px;
+      overflow-y: auto;
+    }
+
+    .txn-row {
+      display: grid;
+      grid-template-columns: 100px 1fr auto;
+      gap: 7px;
+      align-items: center;
+      padding: 9px 15px;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: .78rem;
+    }
+
+    .txn-row:hover {
+      background: #f8fafc;
+    }
+
+    .txn-date {
+      color: #64748b;
+      font-size: .7rem;
+    }
+
+    .txn-desc {
+      color: #334155;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .txn-amt {
+      font-weight: 800;
+      font-size: .85rem;
+      white-space: nowrap;
+    }
+
+    .sp-credit .txn-amt {
+      color: #059669;
+    }
+
+    .sp-debit .txn-amt {
+      color: #dc2626;
+    }
+
+    /* Staff grid */
+    .staff-grid {
+      display: grid;
+      grid-template-columns: 270px 1fr;
+      gap: 18px;
+      min-height: 580px;
+    }
+
+    .staff-panel {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 2px 18px rgba(0, 0, 0, .055);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .staff-item {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 13px 18px;
+      cursor: pointer;
+      transition: all .15s;
+      border-left: 3px solid transparent;
+      border-bottom: 1px solid #f8fafc;
+    }
+
+    .staff-item:hover {
+      background: #f8fafc;
+      border-left-color: #e2e8f0;
+    }
+
+    .staff-item.active {
+      background: #fff9f5;
+      border-left-color: var(--saffron);
+    }
+
+    .av {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: .95rem;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 2px;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 0 22px;
+    }
+
+    .tab-btn {
+      padding: 10px 18px;
+      border: none;
+      background: none;
+      font-size: .8rem;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all .2s;
+      border-radius: 8px 8px 0 0;
+    }
+
+    .tab-btn.active {
+      color: var(--saffron);
+      border-bottom-color: var(--saffron);
+      background: #fff9f5;
+    }
+
+    .tab-c {
+      display: none;
+      padding: 22px;
+    }
+
+    .tab-c.active {
+      display: block;
+    }
+
+    /* Pay summary */
+    .pay-sum {
+      background: linear-gradient(135deg, #12071f, #1e0d36);
+      border-radius: 14px;
+      padding: 22px;
+      color: #fff;
+    }
+
+    .pay-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 7px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, .07);
+      font-size: .82rem;
+    }
+
+    .pay-row:last-child {
+      border: none;
+      padding-top: 11px;
+      font-weight: 800;
+      font-size: .95rem;
+    }
+
+    /* Tiffin accordion */
+    .tif-acc-item {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 1px 10px rgba(0, 0, 0, .055);
+      margin-bottom: 10px;
+      overflow: hidden;
+      border: 1.5px solid #e2e8f0;
+      transition: border-color .2s;
+    }
+
+    .tif-acc-item.expanded {
+      border-color: var(--saffron);
+    }
+
+    .tif-acc-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      cursor: pointer;
+      user-select: none;
+      transition: background .15s;
+    }
+
+    .tif-acc-header:hover {
+      background: #f8fafc;
+    }
+
+    .tif-acc-header.expanded {
+      background: #fff9f5;
+    }
+
+    .tif-acc-body {
+      display: none;
+      border-top: 1px solid #f1f5f9;
+    }
+
+    .tif-acc-body.show {
+      display: block;
+    }
+
+    .tif-amt-input {
+      width: 90px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 5px 9px;
+      font-size: .82rem;
+      font-weight: 700;
+      text-align: right;
+      color: #1e293b;
+      transition: border-color .2s;
+    }
+
+    .tif-amt-input:focus {
+      outline: none;
+      border-color: var(--saffron);
+      box-shadow: 0 0 0 3px rgba(255, 107, 0, .1);
+    }
+
+    /* Processing spinner */
+    .spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 107, 0, .3);
+      border-top-color: var(--saffron);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    /* PDF info strip */
+    .pdf-strip {
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+      border-radius: 12px;
+      padding: 14px 18px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    /* Settings storage */
+    .stor-card {
+      background: linear-gradient(135deg, #12071f, #1e0d36);
+      border-radius: 14px;
+      padding: 22px;
+      color: #fff;
+    }
+
+    .stor-bar {
+      background: rgba(255, 255, 255, .1);
+      border-radius: 20px;
+      height: 7px;
+      margin-top: 7px;
+      overflow: hidden;
+    }
+
+    .stor-fill {
+      background: linear-gradient(90deg, var(--saffron), var(--gold));
+      height: 100%;
+      border-radius: 20px;
+      transition: width .5s;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+
+    @media(max-width:768px) {
+
+      .split-panes,
+      .staff-grid,
+      .frow {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ══ SIDEBAR ══ -->
+  <aside id="sidebar">
+    <div class="sb-logo">
+      <h2>🙏 Durga Shankar is God</h2>
+      <p>Staff Management Portal v3.0</p>
+    </div>
+    <nav style="flex:1;padding:10px 0;overflow-y:auto;">
+      <div class="nav-item active" onclick="navigate('dashboard')">
+        <div class="nav-icon"><i data-lucide="layout-dashboard" style="width:17px;height:17px;"></i></div>
+        <div>
+          <div class="nav-lbl">Dashboard</div>
+          <div class="nav-sub">Overview & Quick Access</div>
+        </div>
+      </div>
+      <div class="nav-item" onclick="navigate('bank')">
+        <div class="nav-icon"><i data-lucide="landmark" style="width:17px;height:17px;"></i></div>
+        <div>
+          <div class="nav-lbl">Bank Statement</div>
+          <div class="nav-sub">PDF Upload · Auto Split</div>
+        </div>
+      </div>
+      <div class="nav-item" onclick="navigate('staff')">
+        <div class="nav-icon"><i data-lucide="users" style="width:17px;height:17px;"></i></div>
+        <div>
+          <div class="nav-lbl">Staff Payroll</div>
+          <div class="nav-sub">Excel Import · Pay Slips</div>
+        </div>
+      </div>
+      <div class="nav-item" onclick="navigate('tiffin')">
+        <div class="nav-icon"><i data-lucide="coffee" style="width:17px;height:17px;"></i></div>
+        <div>
+          <div class="nav-lbl">Tiffin Allowance</div>
+          <div class="nav-sub">PDF Muster Roll · Editable</div>
+        </div>
+      </div>
+      <div class="nav-item" onclick="navigate('settings')">
+        <div class="nav-icon"><i data-lucide="settings-2" style="width:17px;height:17px;"></i></div>
+        <div>
+          <div class="nav-lbl">Settings & Rules</div>
+          <div class="nav-sub">Reliefs · Deductions · Backup</div>
+        </div>
+      </div>
+    </nav>
+    <div class="sb-footer">All data saved in your browser · No server required</div>
+  </aside>
+  <div id="overlay" onclick="closeSidebar()"></div>
+
+  <!-- ══ TOPBAR ══ -->
+  <header id="topbar">
+    <button id="menu-btn" onclick="toggleSidebar()">
+      <i data-lucide="menu" style="width:21px;height:21px;"></i>
+    </button>
+    <div>
+      <div class="tb-title">Staff Portal</div>
+      <div class="tb-sub">DURGA SHANKAR IS GOD</div>
+    </div>
+    <div class="tb-right">
+      <span class="page-badge" id="page-badge">Dashboard</span>
+      <button class="btn btn-s" style="padding:6px 13px;font-size:.72rem;" onclick="exportAll()">
+        <i data-lucide="download" style="width:13px;height:13px;"></i> Backup
+      </button>
+    </div>
+  </header>
+
+  <!-- ══ MAIN ══ -->
+  <main id="main">
+
+    <!-- ── DASHBOARD ── -->
+    <section id="dashboard-page" class="page active">
+      <div
+        style="background:linear-gradient(135deg,#12071f 0%,#1e0d36 55%,#12071f 100%);border-radius:20px;padding:32px 28px;color:#fff;margin-bottom:22px;position:relative;overflow:hidden;">
+        <div style="position:absolute;right:28px;top:50%;transform:translateY(-50%);font-size:5rem;opacity:.08;">🙏
+        </div>
+        <h1
+          style="font-size:1.7rem;font-weight:800;background:linear-gradient(90deg,#FFB300,#FF6B00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
+          🙏 Durga Shankar is God</h1>
+        <p style="color:rgba(255,255,255,.6);font-size:.85rem;margin-top:8px;">Bank Statement PDFs, Staff Payroll,
+          Tiffin Allowances — all stored in your browser.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:22px;"
+        id="dash-stats"></div>
+      <div class="card" style="margin-bottom:18px;">
+        <div style="font-size:1rem;font-weight:800;margin-bottom:4px;">Quick Actions</div>
+        <div style="font-size:.76rem;color:#64748b;margin-bottom:16px;">Jump to any module instantly</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;">
+          <div onclick="navigate('bank')" class="qa-card"><i data-lucide="landmark"
+              style="width:26px;height:26px;color:#059669;"></i><span>Bank PDF<br>Statement</span></div>
+          <div onclick="navigate('staff')" class="qa-card"><i data-lucide="users"
+              style="width:26px;height:26px;color:#7c3aed;"></i><span>Staff Payroll<br>Calculator</span></div>
+          <div onclick="navigate('tiffin')" class="qa-card"><i data-lucide="coffee"
+              style="width:26px;height:26px;color:var(--saffron);"></i><span>Tiffin<br>Allowance</span></div>
+          <div onclick="navigate('settings')" class="qa-card"><i data-lucide="sliders-horizontal"
+              style="width:26px;height:26px;color:#0891b2;"></i><span>Settings<br>& Rules</span></div>
+          <div onclick="exportAll()" class="qa-card"><i data-lucide="save"
+              style="width:26px;height:26px;color:#16a34a;"></i><span>Export<br>Backup</span></div>
+          <div onclick="document.getElementById('dash-import').click()" class="qa-card"><i data-lucide="upload"
+              style="width:26px;height:26px;color:#dc2626;"></i><span>Restore<br>Backup</span></div>
+        </div>
+        <input type="file" id="dash-import" accept=".json" style="display:none" onchange="importAll(event)">
+      </div>
+      <div class="card">
+        <div style="font-size:1rem;font-weight:800;margin-bottom:4px;">Staff Members</div>
+        <div style="font-size:.76rem;color:#64748b;margin-bottom:14px;">Click to open payroll details</div>
+        <div id="dash-staff" style="display:flex;flex-wrap:wrap;gap:10px;"></div>
+      </div>
+    </section>
+
+    <!-- ── BANK STATEMENT (PDF ONLY) ── -->
+    <section id="bank-page" class="page">
+      <div
+        style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div style="font-size:1.2rem;font-weight:800;">🏦 Bank Statement PDF Parser</div>
+          <div style="font-size:.76rem;color:#64748b;">Upload any bank statement PDF · Credits LEFT (green) · Debits
+            RIGHT (red)</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-g" onclick="exportBankExcel()"><i data-lucide="file-spreadsheet"
+              style="width:14px;height:14px;"></i> Export Excel</button>
+          <button class="btn btn-s" onclick="clearBank()"><i data-lucide="trash-2" style="width:14px;height:14px;"></i>
+            Clear</button>
+        </div>
+      </div>
+
+      <!-- PDF upload card -->
+      <div class="card" style="margin-bottom:14px;">
+        <!-- Bank preset buttons -->
+        <div
+          style="font-size:.72rem;font-weight:700;color:#64748b;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;">
+          Bank Format</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+          <button class="btn btn-s" id="pb-auto" onclick="setBankPreset('auto')"
+            style="font-size:.75rem;padding:7px 13px;">⚡ Auto Detect</button>
+          <button class="btn btn-s" id="pb-hdfc" onclick="setBankPreset('hdfc')"
+            style="font-size:.75rem;padding:7px 13px;">🏦 HDFC</button>
+          <button class="btn btn-s" id="pb-sbi" onclick="setBankPreset('sbi')"
+            style="font-size:.75rem;padding:7px 13px;">🏦 SBI</button>
+          <button class="btn btn-s" id="pb-axis" onclick="setBankPreset('axis')"
+            style="font-size:.75rem;padding:7px 13px;">🏦 Axis</button>
+          <button class="btn btn-s" id="pb-icici" onclick="setBankPreset('icici')"
+            style="font-size:.75rem;padding:7px 13px;">🏦 ICICI</button>
+        </div>
+
+        <!-- Drag/drop PDF zone -->
+        <div class="upzone" id="bank-drop" ondragover="ev(event,'bank-drop',true)"
+          ondragleave="ev(event,'bank-drop',false)" ondrop="dropBank(event)">
+          <i data-lucide="file-up" style="width:38px;height:38px;color:#94a3b8;margin-bottom:10px;"></i>
+          <p style="font-weight:700;color:#475569;margin-bottom:4px;">Drag & drop bank statement PDF here</p>
+          <p style="font-size:.72rem;color:#94a3b8;margin-bottom:14px;">Or click to browse — HDFC, SBI, Axis, ICICI and
+            other PDF statements supported</p>
+          <button class="btn btn-p" onclick="document.getElementById('bank-pdf-file').click()">
+            <i data-lucide="upload" style="width:15px;height:15px;"></i> Choose PDF File
+          </button>
+        </div>
+        <input type="file" id="bank-pdf-file" accept=".pdf" style="display:none" onchange="handleBankPDF(event)">
+
+        <!-- Processing status -->
+        <div id="bank-processing"
+          style="display:none;margin-top:12px;padding:12px 16px;background:#f8fafc;border-radius:10px;font-size:.82rem;color:#475569;">
+          <span class="spinner"></span> Extracting text from PDF — please wait...
+        </div>
+
+        <!-- Sample data button -->
+        <div style="margin-top:12px;">
+          <button class="btn btn-s" onclick="loadBankSample()" style="font-size:.75rem;padding:7px 13px;">
+            <i data-lucide="database" style="width:13px;height:13px;"></i> Load Sample Data (Demo)
+          </button>
+        </div>
+      </div>
+
+      <!-- PDF info strip shown after parse -->
+      <div id="bank-pdf-strip" style="display:none;" class="pdf-strip">
+        <i data-lucide="file-check" style="width:24px;height:24px;flex-shrink:0;"></i>
+        <div style="flex:1;">
+          <div style="font-weight:700;font-size:.88rem;" id="pdf-strip-name">statement.pdf</div>
+          <div style="font-size:.72rem;opacity:.75;" id="pdf-strip-info">0 pages · 0 transactions detected</div>
+        </div>
+      </div>
+
+      <!-- Split view -->
+      <div id="bank-split" style="display:none;margin-top:14px;">
+        <!-- Filter bar -->
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+          <input type="text" id="bank-search" class="fi" style="flex:1;min-width:180px;"
+            placeholder="🔍 Search description, date, or amount..." oninput="filterBank()">
+          <input type="date" id="b-from" class="fi" style="width:150px;" onchange="filterBank()">
+          <input type="date" id="b-to" class="fi" style="width:150px;" onchange="filterBank()">
+          <button class="btn btn-s" onclick="clearBankFilter()" title="Clear filter"><i data-lucide="x"
+              style="width:13px;height:13px;"></i></button>
+        </div>
+
+        <!-- Master Column Header -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px;">
+          <div style="background:#ecfdf5;border:1.5px solid #a7f3d0;color:#065f46;padding:12px 18px;border-radius:12px;font-weight:800;font-size:.82rem;display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <i data-lucide="trending-up" style="width:17px;height:17px;color:#059669;"></i>
+              <span>CREDITS (DEPOSITS / INWARD)</span>
+            </div>
+            <span class="badge bg-green" id="c-count">0 entries</span>
+          </div>
+          <div style="background:#fef2f2;border:1.5px solid #fecaca;color:#991b1b;padding:12px 18px;border-radius:12px;font-weight:800;font-size:.82rem;display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <i data-lucide="trending-down" style="width:17px;height:17px;color:#dc2626;"></i>
+              <span>DEBITS (WITHDRAWALS / OUTWARD)</span>
+            </div>
+            <span class="badge bg-red" id="d-count">0 entries</span>
+          </div>
+        </div>
+
+        <!-- Synchronized Day-by-Day Transaction Blocks -->
+        <div id="bank-daily-list"></div>
+      </div>
+    </section>
+
+    <!-- ── STAFF PAYROLL ── -->
+    <section id="staff-page" class="page">
+      <div
+        style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div style="font-size:1.2rem;font-weight:800;">👥 Staff Payroll</div>
+          <div style="font-size:.76rem;color:#64748b;">Import Excel · Auto-maps staff · Pay calculations</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-b" onclick="document.getElementById('staff-excel-file').click()">
+            <i data-lucide="file-spreadsheet" style="width:14px;height:14px;"></i> Import Staff Excel
+          </button>
+          <input type="file" id="staff-excel-file" accept=".xlsx,.xls,.csv" style="display:none"
+            onchange="importStaffExcel(event)">
+          <button class="btn btn-p" onclick="openAddStaff()">
+            <i data-lucide="user-plus" style="width:14px;height:14px;"></i> Add Manually
+          </button>
+        </div>
+      </div>
+      <div id="staff-import-banner" style="display:none;margin-bottom:14px;" class="card">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <i data-lucide="file-check" style="width:28px;height:28px;color:#059669;"></i>
+          <div style="flex:1;">
+            <div style="font-weight:700;font-size:.88rem;" id="import-banner-title">Excel imported</div>
+            <div style="font-size:.72rem;color:#64748b;" id="import-banner-sub">Click on a staff member.</div>
+          </div>
+          <button class="btn btn-g" onclick="exportPayrollExcel()"><i data-lucide="download"
+              style="width:13px;height:13px;"></i> Export Payroll</button>
+        </div>
+      </div>
+      <div class="staff-grid">
+        <div class="staff-panel">
+          <div style="padding:16px 18px 10px;border-bottom:1px solid #f1f5f9;">
+            <div style="font-size:.78rem;font-weight:700;color:#475569;margin-bottom:8px;">STAFF MEMBERS (<span
+                id="staff-count">0</span>)</div>
+            <input type="text" class="fi" style="padding:8px 11px;font-size:.78rem;" placeholder="🔍 Search..."
+              id="staff-srch" oninput="renderStaffList()">
+          </div>
+          <div style="flex:1;overflow-y:auto;" id="staff-list-body">
+            <div style="padding:30px;text-align:center;color:#94a3b8;font-size:.8rem;">
+              <i data-lucide="users" style="width:30px;height:30px;margin-bottom:8px;opacity:.4;"></i>
+              <p>No staff yet. Import Excel or add manually.</p>
+            </div>
+          </div>
+        </div>
+        <div id="staff-detail"
+          style="background:#fff;border-radius:16px;box-shadow:0 2px 18px rgba(0,0,0,.055);display:flex;align-items:center;justify-content:center;">
+          <div style="text-align:center;color:#94a3b8;padding:40px;">
+            <i data-lucide="mouse-pointer-click" style="width:38px;height:38px;opacity:.4;margin-bottom:10px;"></i>
+            <p style="font-size:.85rem;">Select a staff member to view details</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── TIFFIN ALLOWANCE (PDF MUSTER ROLL) ── -->
+    <section id="tiffin-page" class="page">
+      <div
+        style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div style="font-size:1.2rem;font-weight:800;">☕ Tiffin Allowance</div>
+          <div style="font-size:.76rem;color:#64748b;">Upload PagarBook Muster Roll PDF · Accordion view · Editable
+            daily amounts</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-g" onclick="exportTifExcel()"><i data-lucide="file-spreadsheet"
+              style="width:14px;height:14px;"></i> Export Report</button>
+          <button class="btn btn-s" onclick="clearTiffin()"><i data-lucide="trash-2"
+              style="width:14px;height:14px;"></i> Clear</button>
+        </div>
+      </div>
+
+      <!-- Rules reminder -->
+      <div class="card" style="margin-bottom:14px;border-left:4px solid var(--saffron);">
+        <div
+          style="font-size:.72rem;font-weight:700;color:#64748b;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;">
+          Active Rules</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px;">
+          <div style="background:#f0fdf4;border-radius:10px;padding:12px;border:1px solid #bbf7d0;">
+            <div style="font-weight:700;font-size:.85rem;color:#065f46;">₹50 — Morning Tiffin</div>
+            <div style="font-size:.72rem;color:#16a34a;margin-top:3px;">Arrive by cutoff · Stay until <strong>6:00
+                PM</strong></div>
+          </div>
+          <div style="background:#eff6ff;border-radius:10px;padding:12px;border:1px solid #bfdbfe;">
+            <div style="font-weight:700;font-size:.85rem;color:#1e40af;">₹20 — Evening Tiffin</div>
+            <div style="font-size:.72rem;color:#2563eb;margin-top:3px;">Arrive <strong>before 12 PM</strong> · Stay
+              until <strong>8:00 PM</strong></div>
+          </div>
+          <div style="background:#fff9f5;border-radius:10px;padding:12px;border:1px solid #fed7aa;">
+            <div style="font-weight:700;font-size:.85rem;color:#c2410c;">Grace Periods</div>
+            <div style="font-size:.72rem;color:#ea580c;margin-top:3px;">
+              Gents: <strong id="rule-gents">06:10</strong> · Women: <strong id="rule-women">06:20</strong> · Special:
+              <strong id="rule-special">06:30</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PDF Upload -->
+      <div class="card" style="margin-bottom:14px;">
+        <div style="font-size:.8rem;font-weight:700;color:#475569;margin-bottom:12px;">📄 Upload Muster Roll PDF
+          (PagarBook / Attendance)</div>
+        <div class="upzone" id="tif-drop" ondragover="ev(event,'tif-drop',true)"
+          ondragleave="ev(event,'tif-drop',false)" ondrop="dropTif(event)">
+          <i data-lucide="file-up" style="width:36px;height:36px;color:#94a3b8;margin-bottom:10px;"></i>
+          <p style="font-weight:700;color:#475569;margin-bottom:4px;">Drag & drop PagarBook muster roll PDF</p>
+          <p style="font-size:.72rem;color:#94a3b8;margin-bottom:14px;">Extracts staff names, daily IN/OUT times,
+            calculates tiffin automatically</p>
+          <button class="btn btn-p" onclick="document.getElementById('tif-pdf-file').click()">
+            <i data-lucide="upload" style="width:15px;height:15px;"></i> Choose PDF
+          </button>
+        </div>
+        <input type="file" id="tif-pdf-file" accept=".pdf" style="display:none" onchange="handleTifPDF(event)">
+        <div id="tif-processing"
+          style="display:none;margin-top:12px;padding:12px 16px;background:#f8fafc;border-radius:10px;font-size:.82rem;color:#475569;">
+          <span class="spinner"></span><span id="tif-proc-msg">Reading PDF pages...</span>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+          <button class="btn btn-s" onclick="loadTifSample()" style="font-size:.75rem;padding:7px 13px;">
+            <i data-lucide="database" style="width:13px;height:13px;"></i> Load Sample Data (Demo)
+          </button>
+        </div>
+      </div>
+
+      <!-- PDF strip after parse -->
+      <div id="tif-pdf-strip" style="display:none;" class="pdf-strip">
+        <i data-lucide="file-check" style="width:24px;height:24px;flex-shrink:0;"></i>
+        <div style="flex:1;">
+          <div style="font-weight:700;font-size:.88rem;" id="tif-strip-name">muster.pdf</div>
+          <div style="font-size:.72rem;opacity:.75;" id="tif-strip-info">0 staff · 0 punch records</div>
+        </div>
+        <button class="btn btn-s"
+          style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.2);font-size:.75rem;padding:6px 12px;"
+          onclick="processTifResults()">
+          <i data-lucide="calculator" style="width:13px;height:13px;"></i> Recalculate
+        </button>
+      </div>
+
+      <!-- Summary metrics -->
+      <div id="tif-summary-bar" style="display:none;margin-bottom:14px;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;">
+          <div class="mpill">
+            <div class="mval" id="ts-staff">0</div>
+            <div class="mlbl">STAFF</div>
+          </div>
+          <div class="mpill">
+            <div class="mval" id="ts-total" style="color:var(--saffron);">₹0</div>
+            <div class="mlbl">TOTAL TIFFIN</div>
+          </div>
+          <div class="mpill">
+            <div class="mval" id="ts-50" style="color:#059669;">0</div>
+            <div class="mlbl">₹50 DAYS</div>
+          </div>
+          <div class="mpill">
+            <div class="mval" id="ts-20" style="color:#2563eb;">0</div>
+            <div class="mlbl">₹20 DAYS</div>
+          </div>
+          <div class="mpill">
+            <div class="mval" id="ts-70" style="color:#7c3aed;">0</div>
+            <div class="mlbl">₹70 DAYS</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Accordion results -->
+      <div id="tif-results"></div>
+    </section>
+
+    <!-- ── SETTINGS ── -->
+    <section id="settings-page" class="page">
+      <div style="margin-bottom:18px;">
+        <div style="font-size:1.2rem;font-weight:800;">⚙️ Settings & Rules</div>
+        <div style="font-size:.76rem;color:#64748b;">Configure tiffin reliefs, payroll deductions, browser data</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+        <!-- Tiffin Rules -->
+        <div class="card">
+          <div
+            style="font-size:.72rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px;">
+            ☕ Tiffin Rules</div>
+          <div class="fgroup" style="margin-bottom:12px;"><label class="flabel">Morning Tiffin Amount (₹)</label><input
+              type="number" id="s-tif50" class="fi" value="50" oninput="saveSettings()"></div>
+          <div class="fgroup" style="margin-bottom:12px;"><label class="flabel">Evening Tiffin Amount (₹)</label><input
+              type="number" id="s-tif20" class="fi" value="20" oninput="saveSettings()"></div>
+          <div class="fgroup" style="margin-bottom:12px;"><label class="flabel">Stay until (Morning ₹50)</label><input
+              type="time" id="s-stay-eve" class="fi" value="18:00" oninput="saveSettings()"></div>
+          <div class="fgroup" style="margin-bottom:12px;"><label class="flabel">Stay until (Evening ₹20)</label><input
+              type="time" id="s-stay-night" class="fi" value="20:00" oninput="saveSettings()"></div>
+          <div class="fgroup" style="margin-bottom:12px;"><label class="flabel">Latest Arrival for ₹20 (noon
+              cutoff)</label><input type="time" id="s-noon-cut" class="fi" value="12:00" oninput="saveSettings()"></div>
+          <hr style="border:none;border-top:1px solid #f1f5f9;margin:14px 0;">
+          <div
+            style="font-size:.72rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;">
+            Grace Period Cutoffs</div>
+          <div class="fgroup" style="margin-bottom:12px;"><label class="flabel">Gents — Arrive by</label><input
+              type="time" id="s-grace-gent" class="fi" value="06:10" oninput="saveSettings()"></div>
+          <div class="fgroup" style="margin-bottom:12px;"><label class="flabel">Women — Arrive by</label><input
+              type="time" id="s-grace-women" class="fi" value="06:20" oninput="saveSettings()"></div>
+          <div class="fgroup"><label class="flabel">Special Relief — Arrive by</label><input type="time"
+              id="s-grace-special" class="fi" value="06:30" oninput="saveSettings()"></div>
+        </div>
+        <!-- Payroll -->
+        <div>
+          <div class="card" style="margin-bottom:14px;">
+            <div
+              style="font-size:.72rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px;">
+              💰 Payroll Settings</div>
+            <div class="frow">
+              <div class="fgroup"><label class="flabel">Currency</label><input type="text" id="s-cur" class="fi"
+                  value="₹" maxlength="3" oninput="saveSettings()"></div>
+              <div class="fgroup"><label class="flabel">Working Days/Month</label><input type="number" id="s-wdays"
+                  class="fi" value="26" oninput="saveSettings()"></div>
+            </div>
+            <div class="frow">
+              <div class="fgroup"><label class="flabel">PF (%)</label><input type="number" id="s-pf" class="fi"
+                  value="12" step="0.1" oninput="saveSettings()"></div>
+              <div class="fgroup"><label class="flabel">ESI (%)</label><input type="number" id="s-esi" class="fi"
+                  value="0.75" step="0.1" oninput="saveSettings()"></div>
+            </div>
+            <div class="frow">
+              <div class="fgroup"><label class="flabel">TDS (%)</label><input type="number" id="s-tds" class="fi"
+                  value="10" step="0.1" oninput="saveSettings()"></div>
+              <div class="fgroup"><label class="flabel">HRA (%)</label><input type="number" id="s-hra" class="fi"
+                  value="40" step="1" oninput="saveSettings()"></div>
+            </div>
+            <div class="fgroup"><label class="flabel">OT Rate Multiplier</label><input type="number" id="s-ot"
+                class="fi" value="1.5" step="0.1" oninput="saveSettings()"></div>
+          </div>
+          <div class="card">
+            <div
+              style="font-size:.72rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;">
+              Deduction Toggles</div>
+            <div style="display:flex;flex-direction:column;gap:0;">
+              <div
+                style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9;">
+                <div>
+                  <div style="font-size:.85rem;font-weight:500;">Apply PF</div>
+                </div><label class="tog"><input type="checkbox" id="t-pf" onchange="saveSettings()" checked><span
+                    class="tog-sl"></span></label>
+              </div>
+              <div
+                style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9;">
+                <div>
+                  <div style="font-size:.85rem;font-weight:500;">Apply ESI</div>
+                </div><label class="tog"><input type="checkbox" id="t-esi" onchange="saveSettings()"><span
+                    class="tog-sl"></span></label>
+              </div>
+              <div
+                style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9;">
+                <div>
+                  <div style="font-size:.85rem;font-weight:500;">Apply TDS</div>
+                </div><label class="tog"><input type="checkbox" id="t-tds" onchange="saveSettings()"><span
+                    class="tog-sl"></span></label>
+              </div>
+              <div
+                style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9;">
+                <div>
+                  <div style="font-size:.85rem;font-weight:500;">Include HRA</div>
+                </div><label class="tog"><input type="checkbox" id="t-hra" onchange="saveSettings()" checked><span
+                    class="tog-sl"></span></label>
+              </div>
+              <div
+                style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f1f5f9;">
+                <div>
+                  <div style="font-size:.85rem;font-weight:500;">Auto-Deduct Advances</div>
+                </div><label class="tog"><input type="checkbox" id="t-adv" onchange="saveSettings()" checked><span
+                    class="tog-sl"></span></label>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;">
+                <div>
+                  <div style="font-size:.85rem;font-weight:500;">Round Net Pay</div>
+                </div><label class="tog"><input type="checkbox" id="t-round" onchange="saveSettings()" checked><span
+                    class="tog-sl"></span></label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Staff assignment table -->
+      <div class="card" style="margin-top:18px;">
+        <div
+          style="font-size:.72rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px;">
+          Staff Relief Assignments</div>
+        <div style="font-size:.76rem;color:#64748b;margin-bottom:14px;">Tiffin relief category per staff member</div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;" id="assign-table">
+            <thead>
+              <tr>
+                <th
+                  style="background:#f8fafc;padding:9px 13px;text-align:left;font-size:.7rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid #e2e8f0;">
+                  Staff</th>
+                <th
+                  style="background:#f8fafc;padding:9px 13px;text-align:left;font-size:.7rem;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:2px solid #e2e8f0;">
+                  Role</th>
+                <th
+                  style="background:#f8fafc;padding:9px 13px;text-align:left;font-size:.7rem;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:2px solid #e2e8f0;">
+                  Gender</th>
+                <th
+                  style="background:#f8fafc;padding:9px 13px;text-align:left;font-size:.7rem;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:2px solid #e2e8f0;">
+                  Grace Cutoff</th>
+                <th
+                  style="background:#f8fafc;padding:9px 13px;text-align:left;font-size:.7rem;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:2px solid #e2e8f0;">
+                  Custom Override</th>
+                <th
+                  style="background:#f8fafc;padding:9px 13px;text-align:left;font-size:.7rem;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:2px solid #e2e8f0;">
+                  PF Exempt</th>
+              </tr>
+            </thead>
+            <tbody id="assign-tbody"></tbody>
+          </table>
+          <div id="assign-empty" style="padding:28px;text-align:center;color:#94a3b8;font-size:.8rem;">No staff added
+            yet.</div>
+        </div>
+      </div>
+
+      <!-- Storage -->
+      <div class="stor-card" style="margin-top:18px;">
+        <div
+          style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+          <div>
+            <div style="font-size:.68rem;font-weight:700;letter-spacing:1.5px;opacity:.55;margin-bottom:3px;">BROWSER
+              STORAGE</div>
+            <div style="font-size:1rem;font-weight:700;" id="stor-size">Calculating...</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-p" onclick="exportAll()"><i data-lucide="download"
+                style="width:13px;height:13px;"></i> Export Backup</button>
+            <button class="btn btn-s"
+              style="background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.2);"
+              onclick="document.getElementById('set-import').click()">
+              <i data-lucide="upload" style="width:13px;height:13px;"></i> Import Backup
+            </button>
+            <button class="btn btn-r" onclick="confirmClear()"><i data-lucide="trash-2"
+                style="width:13px;height:13px;"></i> Clear All</button>
+          </div>
+        </div>
+        <input type="file" id="set-import" accept=".json" style="display:none" onchange="importAll(event)">
+        <div class="stor-bar">
+          <div class="stor-fill" id="stor-fill" style="width:2%;"></div>
+        </div>
+        <p style="font-size:.66rem;opacity:.4;margin-top:6px;">Stored only in your browser. Never uploaded anywhere.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ══ MODALS ══ -->
+  <!-- Add Staff -->
+  <div class="modal-ov" id="add-staff-modal">
+    <div class="modal-box">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <h3 style="font-size:1rem;font-weight:800;">Add Staff Member</h3>
+        <button onclick="closeModal('add-staff-modal')"
+          style="background:none;border:none;cursor:pointer;color:#94a3b8;"><i data-lucide="x"
+            style="width:18px;height:18px;"></i></button>
+      </div>
+      <div class="frow">
+        <div class="fgroup"><label class="flabel">Full Name *</label><input type="text" id="ns-name" class="fi"
+            placeholder="Ramesh Kumar"></div>
+        <div class="fgroup"><label class="flabel">Role</label><input type="text" id="ns-role" class="fi"
+            placeholder="Manager"></div>
+      </div>
+      <div class="frow">
+        <div class="fgroup"><label class="flabel">Gender</label>
+          <select id="ns-gender" class="fsel">
+            <option value="gent">Gents</option>
+            <option value="women">Women</option>
+            <option value="special">Special Relief</option>
+          </select>
+        </div>
+        <div class="fgroup"><label class="flabel">Custom Tiffin Cutoff (optional)</label><input type="time"
+            id="ns-relief" class="fi"></div>
+      </div>
+      <div class="frow">
+        <div class="fgroup"><label class="flabel">Pay Type</label>
+          <select id="ns-paytype" class="fsel">
+            <option value="monthly">Monthly Salary</option>
+            <option value="daily">Daily Wage</option>
+            <option value="task">Task Rate</option>
+          </select>
+        </div>
+        <div class="fgroup"><label class="flabel">Base Amount (₹)</label><input type="number" id="ns-base" class="fi"
+            placeholder="20000" min="0"></div>
+      </div>
+      <div class="frow">
+        <div class="fgroup"><label class="flabel">Phone</label><input type="text" id="ns-phone" class="fi"
+            placeholder="Optional"></div>
+        <div class="fgroup"><label class="flabel">Join Date</label><input type="date" id="ns-join" class="fi"></div>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px;">
+        <button class="btn btn-s" onclick="closeModal('add-staff-modal')">Cancel</button>
+        <button class="btn btn-p" onclick="saveNewStaff()"><i data-lucide="check" style="width:13px;height:13px;"></i>
+          Add Staff</button>
+      </div>
+    </div>
+  </div>
+  <!-- Add Exemption -->
+  <div class="modal-ov" id="ex-modal">
+    <div class="modal-box">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <h3 style="font-size:1rem;font-weight:800;">Add Custom Exemption</h3>
+        <button onclick="closeModal('ex-modal')" style="background:none;border:none;cursor:pointer;color:#94a3b8;"><i
+            data-lucide="x" style="width:18px;height:18px;"></i></button>
+      </div>
+      <div class="fgroup" style="margin-bottom:12px;"><label class="flabel">Type</label>
+        <select id="ex-type" class="fsel">
+          <option value="flat">Flat Add (₹)</option>
+          <option value="deduct">Flat Deduct (₹)</option>
+          <option value="pct_add">% Add</option>
+          <option value="pct_ded">% Deduct</option>
+          <option value="override">Override Rule</option>
+        </select>
+      </div>
+      <div class="fgroup" style="margin-bottom:12px;"><label class="flabel">Label</label><input type="text"
+          id="ex-label" class="fi" placeholder="e.g. Festival Bonus"></div>
+      <div class="fgroup" style="margin-bottom:12px;"><label class="flabel">Value (₹ or %)</label><input type="number"
+          id="ex-val" class="fi" min="0" step="any"></div>
+      <div class="fgroup" style="margin-bottom:14px;"><label class="flabel">Override Rule (if Override type)</label>
+        <select id="ex-ov-rule" class="fsel">
+          <option value="">— Select —</option>
+          <option value="pf">Skip PF</option>
+          <option value="esi">Skip ESI</option>
+          <option value="tds">Skip TDS</option>
+          <option value="adv">Skip Advance</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-s" onclick="closeModal('ex-modal')">Cancel</button>
+        <button class="btn btn-p" onclick="saveExemption()"><i data-lucide="plus" style="width:13px;height:13px;"></i>
+          Add</button>
+      </div>
+    </div>
+  </div>
+  <!-- Add Advance -->
+  <div class="modal-ov" id="adv-modal">
+    <div class="modal-box">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <h3 style="font-size:1rem;font-weight:800;">Record Advance</h3>
+        <button onclick="closeModal('adv-modal')" style="background:none;border:none;cursor:pointer;color:#94a3b8;"><i
+            data-lucide="x" style="width:18px;height:18px;"></i></button>
+      </div>
+      <div class="fgroup" style="margin-bottom:12px;"><label class="flabel">Amount (₹)</label><input type="number"
+          id="adv-amt" class="fi" min="0"></div>
+      <div class="fgroup" style="margin-bottom:12px;"><label class="flabel">Date</label><input type="date" id="adv-date"
+          class="fi"></div>
+      <div class="fgroup" style="margin-bottom:12px;"><label class="flabel">Notes</label><input type="text"
+          id="adv-note" class="fi" placeholder="Reason"></div>
+      <div class="fgroup" style="margin-bottom:14px;"><label class="flabel">Deduct Mode</label>
+        <select id="adv-deduct" class="fsel">
+          <option value="this">This month</option>
+          <option value="split2">Split 2 months</option>
+          <option value="split3">Split 3 months</option>
+          <option value="manual">Manual only</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-s" onclick="closeModal('adv-modal')">Cancel</button>
+        <button class="btn btn-p" onclick="saveAdvance()"><i data-lucide="check" style="width:13px;height:13px;"></i>
+          Save</button>
+      </div>
+    </div>
+  </div>
+  <!-- Confirm -->
+  <div class="modal-ov" id="confirm-modal">
+    <div class="modal-box" style="max-width:380px;text-align:center;">
+      <i data-lucide="alert-triangle" style="width:44px;height:44px;color:#ef4444;margin-bottom:14px;"></i>
+      <h3 style="font-size:1rem;font-weight:800;margin-bottom:7px;" id="conf-title">Are you sure?</h3>
+      <p style="font-size:.82rem;color:#64748b;" id="conf-body">This cannot be undone.</p>
+      <div style="display:flex;gap:8px;justify-content:center;margin-top:20px;">
+        <button class="btn btn-s" onclick="closeModal('confirm-modal')">Cancel</button>
+        <button class="btn btn-r" id="conf-btn">Confirm</button>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <style>
+    .qa-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 18px 14px;
+      background: #f8fafc;
+      border-radius: 14px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all .2s;
+    }
+
+    .qa-card:hover {
+      border-color: var(--saffron);
+      background: #fff9f5;
+      transform: translateY(-2px);
+    }
+
+    .qa-card span {
+      font-size: .75rem;
+      font-weight: 600;
+      color: #475569;
+      text-align: center;
+    }
+  </style>
+
+  <script>
+    // ═══════════════════════════════
+    //  PDF.js setup
+    // ═══════════════════════════════
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    // ═══════════════════════════════
+    //  STATE
+    // ═══════════════════════════════
+    const SK = 'durga_shankar_v3';
+    const COLORS = ['#7c3aed', '#0891b2', '#059669', '#dc2626', '#d97706', '#db2777', '#ea580c', '#65a30d', '#0f766e', '#9333ea'];
+    let S = {
+      settings: {
+        cur: '₹', wdays: 26, otRate: 1.5, pf: 12, esi: 0.75, tds: 10, hra: 40,
+        tif50: 50, tif20: 20, stayEve: '18:00', stayNight: '20:00', noonCut: '12:00',
+        graceGent: '06:10', graceWomen: '06:20', graceSpecial: '06:30',
+        tPf: true, tEsi: false, tTds: false, tHra: true, tAdv: true, tRound: true
+      },
+      staff: [], bank: [], tiffin: [], tifResults: null, currentStaff: null, bankPreset: 'auto'
+    };
+    function load() { try { const d = localStorage.getItem(SK); if (d) S = JSON.parse(d); } catch (e) { } }
+    function save() { localStorage.setItem(SK, JSON.stringify(S)); updateStorage(); }
+
+    // ═══════════════════════════════
+    //  NAVIGATION
+    // ═══════════════════════════════
+    const PAGES = ['dashboard', 'bank', 'staff', 'tiffin', 'settings'];
+    const PLBLS = { dashboard: 'Dashboard', bank: 'Bank Statement', staff: 'Staff Payroll', tiffin: 'Tiffin Allowance', settings: 'Settings & Rules' };
+    function navigate(id) {
+      PAGES.forEach(p => document.getElementById(p + '-page').classList.toggle('active', p === id));
+      document.querySelectorAll('.nav-item').forEach((el, i) => el.classList.toggle('active', i === PAGES.indexOf(id)));
+      document.getElementById('page-badge').textContent = PLBLS[id] || id;
+      closeSidebar();
+      if (id === 'dashboard') renderDash();
+      if (id === 'staff') renderStaffList();
+      if (id === 'settings') { loadSettingsForm(); renderAssignTable(); updateStorage(); }
+      if (id === 'tiffin') updateTifRuleDisplay();
+    }
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); document.getElementById('overlay').classList.toggle('show'); }
+    function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('overlay').classList.remove('show'); }
+
+    // ═══════════════════════════════
+    //  TOAST & MODAL
+    // ═══════════════════════════════
+    function toast(msg, type = 'info') {
+      const t = document.getElementById('toast');
+      t.className = `toast ${type}`;
+      t.innerHTML = ({ success: '✅', error: '❌', info: 'ℹ️' }[type] || '') + ' ' + msg;
+      t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3500);
+    }
+    function openModal(id) { document.getElementById(id).classList.add('show'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+    function showConfirm(title, body, fn) {
+      document.getElementById('conf-title').textContent = title;
+      document.getElementById('conf-body').textContent = body;
+      document.getElementById('conf-btn').onclick = () => { fn(); closeModal('confirm-modal'); };
+      openModal('confirm-modal');
+    }
+
+    // ═══════════════════════════════
+    //  DASHBOARD
+    // ═══════════════════════════════
+    function renderDash() {
+      const tc = S.bank.filter(t => t.type === 'credit').reduce((a, t) => a + t.amount, 0);
+      const td = S.bank.filter(t => t.type === 'debit').reduce((a, t) => a + t.amount, 0);
+      const tif = S.tifResults ? S.tifResults.reduce((a, r) => a + r.total, 0) : 0;
+      document.getElementById('dash-stats').innerHTML = `
+    <div style="background:linear-gradient(135deg,#065f46,#059669);color:#fff;border-radius:14px;padding:18px;">
+      <div style="font-size:.66rem;opacity:.7;letter-spacing:1px;margin-bottom:5px;">TOTAL CREDITED</div>
+      <div style="font-size:1.3rem;font-weight:800;">${fmt(tc)}</div></div>
+    <div style="background:linear-gradient(135deg,#7f1d1d,#dc2626);color:#fff;border-radius:14px;padding:18px;">
+      <div style="font-size:.66rem;opacity:.7;letter-spacing:1px;margin-bottom:5px;">TOTAL DEBITED</div>
+      <div style="font-size:1.3rem;font-weight:800;">${fmt(td)}</div></div>
+    <div style="background:linear-gradient(135deg,#1e3a8a,#3b82f6);color:#fff;border-radius:14px;padding:18px;">
+      <div style="font-size:.66rem;opacity:.7;letter-spacing:1px;margin-bottom:5px;">STAFF MEMBERS</div>
+      <div style="font-size:1.3rem;font-weight:800;">${S.staff.length}</div></div>
+    <div style="background:linear-gradient(135deg,#78350f,#f59e0b);color:#fff;border-radius:14px;padding:18px;">
+      <div style="font-size:.66rem;opacity:.7;letter-spacing:1px;margin-bottom:5px;">TIFFIN ALLOWANCE</div>
+      <div style="font-size:1.3rem;font-weight:800;">${fmt(tif)}</div></div>`;
+      const ds = document.getElementById('dash-staff');
+      if (!S.staff.length) { ds.innerHTML = '<p style="color:#94a3b8;font-size:.8rem;">No staff yet.</p>'; return; }
+      ds.innerHTML = S.staff.map(s => `
+    <div onclick="navigate('staff');setTimeout(()=>selectStaff('${s.id}'),300)"
+      style="display:flex;align-items:center;gap:9px;padding:11px 14px;background:#f8fafc;border-radius:12px;cursor:pointer;border:1.5px solid #e2e8f0;transition:all .2s;"
+      onmouseenter="this.style.borderColor='var(--saffron)'" onmouseleave="this.style.borderColor='#e2e8f0'">
+      <div class="av" style="background:${s.color};width:32px;height:32px;font-size:.8rem;">${s.name[0].toUpperCase()}</div>
+      <div><div style="font-weight:700;font-size:.82rem;">${s.name}</div><div style="font-size:.68rem;color:#94a3b8;">${s.role || 'Staff'}</div></div>
+    </div>`).join('');
+    }
+
+    // ═══════════════════════════════
+    //  BANK — PDF PARSER
+    // ═══════════════════════════════
+    let bankPDFPreset = 'auto';
+    function setBankPreset(p, silent = false) {
+      bankPDFPreset = p; S.bankPreset = p; save();
+      document.querySelectorAll('[id^="pb-"]').forEach(b => { b.style.background = ''; b.style.color = ''; b.style.border = ''; });
+      const el = document.getElementById('pb-' + p);
+      if (el) { el.style.background = 'linear-gradient(135deg,var(--saffron),var(--gold))'; el.style.color = '#fff'; }
+      if (!silent) toast('Preset: ' + (p === 'auto' ? 'Auto Detect' : p.toUpperCase()), 'info');
+    }
+    function ev(e, id, on) { e.preventDefault(); document.getElementById(id).classList.toggle('drag-over', on); }
+    function dropBank(e) { e.preventDefault(); document.getElementById('bank-drop').classList.remove('drag-over'); const f = e.dataTransfer.files[0]; if (f && f.type === 'application/pdf') parseBankPDF(f); else toast('Please drop a PDF file.', 'error'); }
+    function handleBankPDF(e) { if (e.target.files[0]) parseBankPDF(e.target.files[0]); e.target.value = ''; }
+
+    async function parseBankPDF(file) {
+      const proc = document.getElementById('bank-processing');
+      proc.style.display = 'block';
+      try {
+        const ab = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
+        const numPages = pdf.numPages;
+        let allItems = [];
+        for (let p = 1; p <= numPages; p++) {
+          proc.querySelector('span:last-child') || proc.appendChild(document.createTextNode(''));
+          proc.childNodes[proc.childNodes.length - 1].textContent = ` Extracting page ${p}/${numPages}…`;
+          const page = await pdf.getPage(p);
+          const tc = await page.getTextContent();
+          tc.items.forEach(item => {
+            allItems.push({
+              str: item.str,
+              x: Math.round(item.transform[4]),
+              y: Math.round(item.transform[5]),
+              page: p
+            });
+          });
+        }
+        // Group into logical lines by Y (bucket ±5px)
+        const lineMap = {};
+        allItems.forEach(item => {
+          const key = Math.round(item.y / 5) * 5 + '_p' + item.page;
+          if (!lineMap[key]) lineMap[key] = [];
+          lineMap[key].push(item);
+        });
+        const lines = Object.values(lineMap)
+          .map(items => items.sort((a, b) => a.x - b.x))
+          .sort((a, b) => {
+            const pa = a[0]?.page || 0, pb = b[0]?.page || 0;
+            if (pa !== pb) return pa - pb;
+            return (b[0]?.y || 0) - (a[0]?.y || 0);
+          });
+
+        const txns = parseBankLinesPositional(lines, bankPDFPreset);
+        S.bank = txns; save();
+        renderBankSplit(txns);
+        document.getElementById('bank-pdf-strip').style.display = 'flex';
+        document.getElementById('pdf-strip-name').textContent = file.name;
+        document.getElementById('pdf-strip-info').textContent =
+          `${numPages} page${numPages > 1 ? 's' : ''} · ${txns.length} transactions detected`;
+        toast(`Parsed ${txns.length} transactions from ${numPages}-page PDF!`, 'success');
+      } catch (err) {
+        console.error('Bank PDF parse error:', err);
+        toast('PDF parsing error. Try HDFC or SBI preset manually.', 'error');
+      }
+      proc.style.display = 'none';
+    }
+
+    // Positional column-aware bank line parser
+    function parseBankLinesPositional(lines, preset) {
+      const txns = [];
+      const dateRx = /(\d{1,2}[-\/]\d{1,2}[-\/]\d{2,4})/;
+
+      // Helper: detect if a string is a cheque number, reference number, account number, or UTR
+      function isRefOrAccountOrCheque(rawStr) {
+        const s = rawStr.trim();
+        // Starts with multiple zeros like 0000000000001661, 0000281153324992, 0000000000000113
+        if (/^0{2,}\d+/.test(s)) return true;
+        // Plain integer with 8 or more digits and no decimal point (cheque numbers, ref numbers)
+        if (/^\d{8,}$/.test(s)) return true;
+        // Contains alphabets or codes like HDFCH..., CDT..., ATW-..., etc.
+        if (/[a-zA-Z]/.test(s)) return true;
+        return false;
+      }
+
+      // Helper: valid monetary amount string
+      function isValidMonetaryAmount(rawStr) {
+        if (!rawStr) return false;
+        const s = rawStr.trim();
+        if (isRefOrAccountOrCheque(s)) return false;
+        const clean = s.replace(/,/g, '');
+        // Must be a valid numeric format: e.g. 20000.00, 10000.00, 800.00, 1.23, 1500
+        if (/^\d{1,9}(\.\d{1,2})?$/.test(clean)) {
+          // Reject leading zero numbers like 01234 (unless 0 or 0.xx)
+          if (/^0\d+/.test(clean)) return false;
+          const val = parseFloat(clean);
+          return val > 0 && val < 1e9;
+        }
+        return false;
+      }
+
+      // Step 1: Detect column X-positions from header row(s)
+      let chqCol = -1, valDtCol = -1, drCol = -1, crCol = -1, balCol = -1;
+      for (const line of lines) {
+        const texts = line.map(i => i.str.toLowerCase().trim());
+        const chqIdx = texts.findIndex(t => /chq|ref\.?\s*no|reference/.test(t));
+        const valDtIdx = texts.findIndex(t => /value\s*dt|val\s*dt/.test(t));
+        const drIdx = texts.findIndex(t => /withdraw|debit|dr\b|amount dr/.test(t));
+        const crIdx = texts.findIndex(t => /deposit|credit|cr\b|amount cr/.test(t));
+        const balIdx = texts.findIndex(t => /balance|bal\b/.test(t));
+        if (drIdx >= 0 && crIdx >= 0) {
+          if (chqIdx >= 0) chqCol = line[chqIdx].x;
+          if (valDtIdx >= 0) valDtCol = line[valDtIdx].x;
+          drCol = line[drIdx].x;
+          crCol = line[crIdx].x;
+          if (balIdx >= 0) balCol = line[balIdx].x;
+          break;
+        }
+      }
+
+      // Step 2: Process each line
+      for (const line of lines) {
+        const fullText = line.map(i => i.str).join(' ').trim();
+        const dateMatch = fullText.match(dateRx);
+        if (!dateMatch) continue;
+        const date = dateMatch[1];
+
+        // Filter valid amount items — STRICTLY excluding reference numbers, cheque numbers, account numbers, and dates
+        const validAmtItems = line.filter(i => {
+          if (dateRx.test(i.str)) return false;
+          return isValidMonetaryAmount(i.str);
+        });
+
+        // Filter description items (text before the financial columns)
+        const descItems = line.filter(i => {
+          if (dateRx.test(i.str)) return false;
+          if (isValidMonetaryAmount(i.str)) return false;
+          if (isRefOrAccountOrCheque(i.str)) return false;
+          return i.str.trim().length > 1;
+        });
+        const desc = descItems.map(i => i.str).join(' ').replace(/\s+/g, ' ').trim().slice(0, 75) || 'Transaction';
+
+        if (!validAmtItems.length) continue;
+        const nums = validAmtItems.map(i => ({ val: parseFloat(i.str.replace(/,/g, '')), x: i.x, raw: i.str }));
+
+        // Lower-case full text for keyword hints
+        const lower = fullText.toLowerCase();
+        const isCr = /\b(cr|credit|deposit|received|inward)\b/.test(lower) || /neft cr|rtgs cr|imps cr|upi cr/i.test(lower);
+        const isDr = /\b(dr|debit|withdraw|payment|outward)\b/.test(lower) || /neft dr|rtgs dr|imps dr|upi dr|nach/i.test(lower);
+
+        // If column positions known, use strict column mapping
+        if (drCol >= 0 && crCol >= 0) {
+          let drCandidate = null;
+          let crCandidate = null;
+          let balCandidate = null;
+
+          // Define column boundaries
+          const leftBoundForDr = (valDtCol > 0) ? (valDtCol + drCol) / 2 : (chqCol > 0 ? (chqCol + drCol) / 2 : drCol - 50);
+          const splitDrCr = (drCol + crCol) / 2;
+          const splitCrBal = (balCol > 0) ? (crCol + balCol) / 2 : crCol + 50;
+
+          nums.forEach(n => {
+            // Reject any item located in the reference or value date columns
+            if (n.x < leftBoundForDr) return;
+
+            if (n.x >= leftBoundForDr && n.x < splitDrCr) {
+              // Falls in Debit (Withdrawal) column
+              if (!drCandidate || Math.abs(n.x - drCol) < Math.abs(drCandidate.x - drCol)) {
+                drCandidate = n;
+              }
+            } else if (n.x >= splitDrCr && n.x < splitCrBal) {
+              // Falls in Credit (Deposit) column
+              if (!crCandidate || Math.abs(n.x - crCol) < Math.abs(crCandidate.x - crCol)) {
+                crCandidate = n;
+              }
+            } else if (n.x >= splitCrBal) {
+              // Falls in Closing Balance column
+              if (!balCandidate || (balCol > 0 && Math.abs(n.x - balCol) < Math.abs(balCandidate.x - balCol))) {
+                balCandidate = n;
+              }
+            }
+          });
+
+          const drAmt = drCandidate ? drCandidate.val : 0;
+          const crAmt = crCandidate ? crCandidate.val : 0;
+          const balAmt = balCandidate ? balCandidate.val : null;
+
+          if (crAmt > 0 && drAmt === 0) {
+            txns.push({ type: 'credit', date, desc, amount: crAmt, balance: balAmt });
+          } else if (drAmt > 0 && crAmt === 0) {
+            txns.push({ type: 'debit', date, desc, amount: drAmt, balance: balAmt });
+          } else if (drAmt > 0 && crAmt > 0) {
+            if (isCr && !isDr) txns.push({ type: 'credit', date, desc, amount: crAmt, balance: balAmt });
+            else if (isDr && !isCr) txns.push({ type: 'debit', date, desc, amount: drAmt, balance: balAmt });
+            else {
+              txns.push({ type: 'debit', date, desc, amount: drAmt, balance: balAmt });
+            }
+          }
+        } else {
+          // Fallback: when column headers could not be found
+          if (nums.length >= 2) {
+            const lastVal = nums[nums.length - 1].val;
+            const amtVal = nums[nums.length - 2].val;
+            if (isCr && !isDr) txns.push({ type: 'credit', date, desc, amount: amtVal, balance: lastVal });
+            else txns.push({ type: 'debit', date, desc, amount: amtVal, balance: lastVal });
+          } else if (nums.length === 1) {
+            const amtVal = nums[0].val;
+            if (isCr && !isDr) txns.push({ type: 'credit', date, desc, amount: amtVal, balance: null });
+            else txns.push({ type: 'debit', date, desc, amount: amtVal, balance: null });
+          }
+        }
+      }
+      return txns;
+    }
+
+    function loadBankSample() {
+      S.bank = [
+        { type: 'credit', date: '01/10/2025', desc: 'NEFT CR-Rahul Sharma Client Payment', amount: 25000, balance: 75000 },
+        { type: 'debit',  date: '01/10/2025', desc: 'UPI DR-Office Tea & Snacks', amount: 350, balance: 74650 },
+        { type: 'debit',  date: '02/10/2025', desc: 'UPI DR-Office Rent Payment', amount: 12000, balance: 62650 },
+        { type: 'credit', date: '03/10/2025', desc: 'RTGS CR-Bulk Order Project Advance', amount: 48500, balance: 111150 },
+        { type: 'credit', date: '03/10/2025', desc: 'IMPS CR-Consulting Retainer Fee', amount: 15000, balance: 126150 },
+        { type: 'debit',  date: '03/10/2025', desc: 'CHQ-Vendor Materials Batch 1', amount: 8200, balance: 117950 },
+        { type: 'debit',  date: '04/10/2025', desc: 'NACH-Electricity Utility Bill', amount: 3200, balance: 114750 },
+        { type: 'credit', date: '05/10/2025', desc: 'IMPS CR-GST Refund Input Credit', amount: 4750, balance: 119500 },
+        { type: 'debit',  date: '06/10/2025', desc: 'NEFT DR-Staff Salary October', amount: 18000, balance: 101500 },
+        { type: 'debit',  date: '06/10/2025', desc: 'UPI DR-Broadband Internet Bill', amount: 1500, balance: 100000 },
+        { type: 'credit', date: '07/10/2025', desc: 'IMPS CR-Online Portal Sales', amount: 12300, balance: 112300 },
+        { type: 'debit',  date: '07/10/2025', desc: 'CHQ-Warehouse Logistics Transport', amount: 4100, balance: 108200 },
+        { type: 'debit',  date: '08/10/2025', desc: 'CHQ-Raw Materials Supply', amount: 9800, balance: 98400 },
+        { type: 'credit', date: '10/10/2025', desc: 'NEFT CR-Enterprise Contract B', amount: 35000, balance: 133400 },
+        { type: 'debit',  date: '11/10/2025', desc: 'UPI DR-Vehicle Fuel & Maintenance', amount: 2800, balance: 130600 },
+        { type: 'debit',  date: '15/10/2025', desc: 'CHQ-Office Supplies Stationery', amount: 1200, balance: 129400 },
+        { type: 'credit', date: '16/10/2025', desc: 'NEFT CR-Dividend Payout', amount: 5500, balance: 134900 },
+        { type: 'debit',  date: '20/10/2025', desc: 'NACH-LIC Premium Policy Deduction', amount: 4500, balance: 130400 },
+      ];
+      save(); renderBankSplit(S.bank);
+      document.getElementById('bank-pdf-strip').style.display = 'flex';
+      document.getElementById('pdf-strip-name').textContent = 'Sample Data (Demo Statement)';
+      document.getElementById('pdf-strip-info').textContent = `${S.bank.length} sample transactions loaded with daily balances`;
+      toast('Sample bank data loaded!', 'success');
+    }
+
+    function renderBankSplit(txns) {
+      document.getElementById('bank-split').style.display = 'block';
+      const container = document.getElementById('bank-daily-list');
+      if (!container) return;
+
+      const creditsAll = txns.filter(t => t.type === 'credit');
+      const debitsAll = txns.filter(t => t.type === 'debit');
+      document.getElementById('c-count').textContent = `${creditsAll.length} entr${creditsAll.length === 1 ? 'y' : 'ies'}`;
+      document.getElementById('d-count').textContent = `${debitsAll.length} entr${debitsAll.length === 1 ? 'y' : 'ies'}`;
+
+      if (!txns.length) {
+        container.innerHTML = '<div class="card" style="padding:34px;text-align:center;color:#94a3b8;font-size:.85rem;">No transactions matching the filter.</div>';
+        return;
+      }
+
+      // Group transactions strictly by date
+      const dateMap = new Map();
+      txns.forEach(t => {
+        const d = (t.date || '').trim() || 'Undated';
+        if (!dateMap.has(d)) {
+          dateMap.set(d, { credits: [], debits: [], balance: null });
+        }
+        const grp = dateMap.get(d);
+        if (t.type === 'credit') grp.credits.push(t);
+        else grp.debits.push(t);
+
+        // Capture closing balance (the last transaction of the day holds the day's final balance)
+        if (t.balance !== undefined && t.balance !== null && t.balance !== '') {
+          grp.balance = t.balance;
+        }
+      });
+
+      let html = '';
+      dateMap.forEach((grp, date) => {
+        const credits = grp.credits;
+        const debits = grp.debits;
+        const maxRows = Math.max(credits.length, debits.length);
+
+        let rowsHtml = '';
+        for (let i = 0; i < maxRows; i++) {
+          const cr = credits[i];
+          const dr = debits[i];
+          const isLast = (i === maxRows - 1);
+          const borderStyle = isLast ? '' : 'border-bottom:1px solid #f1f5f9;';
+
+          // Left side: Credit cell
+          const leftCell = cr
+            ? `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px;${borderStyle}border-right:1px solid #e2e8f0;background:#ffffff;">
+                 <div style="min-width:0;flex:1;">
+                   <div style="font-size:.82rem;font-weight:600;color:#1e293b;word-break:break-word;">${cr.desc || 'Credit Transaction'}</div>
+                   <div style="font-size:.7rem;color:#64748b;margin-top:2px;">Credit Entry #${i + 1}</div>
+                 </div>
+                 <div style="font-weight:800;font-size:.92rem;color:#059669;white-space:nowrap;padding-left:8px;">+${fmt(cr.amount)}</div>
+               </div>`
+            : `<div style="padding:12px 18px;color:#94a3b8;font-size:.75rem;font-style:italic;${borderStyle}border-right:1px solid #e2e8f0;background:#fafbfc;display:flex;align-items:center;">
+                 <span style="opacity:.6;">—</span>
+               </div>`;
+
+          // Right side: Debit cell
+          const rightCell = dr
+            ? `<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px;${borderStyle}background:#ffffff;">
+                 <div style="min-width:0;flex:1;">
+                   <div style="font-size:.82rem;font-weight:600;color:#1e293b;word-break:break-word;">${dr.desc || 'Debit Transaction'}</div>
+                   <div style="font-size:.7rem;color:#64748b;margin-top:2px;">Debit Entry #${i + 1}</div>
+                 </div>
+                 <div style="font-weight:800;font-size:.92rem;color:#dc2626;white-space:nowrap;padding-left:8px;">-${fmt(dr.amount)}</div>
+               </div>`
+            : `<div style="padding:12px 18px;color:#94a3b8;font-size:.75rem;font-style:italic;${borderStyle}background:#fafbfc;display:flex;align-items:center;">
+                 <span style="opacity:.6;">—</span>
+               </div>`;
+
+          rowsHtml += leftCell + rightCell;
+        }
+
+        // Daily closing balance
+        const closingBalDisplay = (grp.balance !== null && grp.balance !== undefined)
+          ? `<span style="font-size:1.02rem;font-weight:800;color:#0f172a;background:#fff;padding:5px 16px;border-radius:20px;border:1.5px solid #cbd5e1;box-shadow:0 1px 4px rgba(0,0,0,.04);">${fmt(grp.balance)}</span>`
+          : `<span style="font-size:.78rem;color:#64748b;font-style:italic;">No balance recorded</span>`;
+
+        html += `
+          <div class="card" style="margin-bottom:24px;padding:0;overflow:hidden;border:1.5px solid #cbd5e1;border-radius:14px;box-shadow:0 3px 12px rgba(0,0,0,.04);">
+            <!-- Day Header: Both columns start on this exact same line -->
+            <div style="background:#f1f5f9;padding:10px 18px;border-bottom:1.5px solid #cbd5e1;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span style="font-weight:800;font-size:.9rem;color:#0f172a;">📅 ${date}</span>
+                <span class="badge ${credits.length ? 'bg-green' : 'bg-gray'}">${credits.length} Credit${credits.length !== 1 ? 's' : ''}</span>
+                <span class="badge ${debits.length ? 'bg-red' : 'bg-gray'}">${debits.length} Debit${debits.length !== 1 ? 's' : ''}</span>
+              </div>
+            </div>
+
+            <!-- Side-by-Side Synchronized Grid for Date -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;background:#fff;">
+              ${rowsHtml}
+            </div>
+
+            <!-- Closing balance at the end of every day -->
+            <div style="background:linear-gradient(135deg,#f8fafc,#f1f5f9);border-top:1.5px solid #cbd5e1;padding:11px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <i data-lucide="check-circle" style="width:16px;height:16px;color:#059669;"></i>
+                <span style="font-size:.75rem;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.6px;">CLOSING BALANCE AT END OF ${date}</span>
+              </div>
+              <div>
+                ${closingBalDisplay}
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    function filterBank() {
+      const s = document.getElementById('bank-search').value.toLowerCase().trim();
+      const from = document.getElementById('b-from').value;
+      const to = document.getElementById('b-to').value;
+      let txns = [...S.bank];
+      if (s) {
+        txns = txns.filter(t => (t.desc || '').toLowerCase().includes(s) || String(t.amount).includes(s) || (t.date || '').includes(s));
+      }
+      if (from || to) {
+        txns = txns.filter(t => {
+          const parts = (t.date || '').split(/[-\/]/);
+          if (parts.length === 3) {
+            let yr = parts[2];
+            if (yr.length === 2) yr = '20' + yr;
+            const iso = `${yr}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            if (from && iso < from) return false;
+            if (to && iso > to) return false;
+          }
+          return true;
+        });
+      }
+      renderBankSplit(txns);
+    }
+    function clearBankFilter() { ['bank-search', 'b-from', 'b-to'].forEach(id => document.getElementById(id).value = ''); renderBankSplit(S.bank); }
+    function clearBank() { if (confirm('Clear all bank data?')) { S.bank = []; save(); document.getElementById('bank-split').style.display = 'none'; document.getElementById('bank-pdf-strip').style.display = 'none'; toast('Cleared.', 'info'); } }
+    function exportBankExcel() {
+      if (!S.bank.length) { toast('No transactions.', 'error'); return; }
+      const credits = S.bank.filter(t => t.type === 'credit');
+      const debits = S.bank.filter(t => t.type === 'debit');
+      const mx = Math.max(credits.length, debits.length);
+      const rows = [['Date (Credit)', 'Narration (Credit)', 'Amount (Credit)', '', 'Date (Debit)', 'Narration (Debit)', 'Amount (Debit)']];
+      for (let i = 0; i < mx; i++) { const c = credits[i] || {}; const d = debits[i] || {}; rows.push([c.date || '', c.desc || '', c.amount || '', '', d.date || '', d.desc || '', d.amount || '']); }
+      rows.push([]); rows.push(['TOTAL CREDITED', '', '', credits.reduce((a, t) => a + t.amount, 0), 'TOTAL DEBITED', '', debits.reduce((a, t) => a + t.amount, 0)]);
+      const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = [{ wch: 14 }, { wch: 32 }, { wch: 14 }, { wch: 3 }, { wch: 14 }, { wch: 32 }, { wch: 14 }];
+      XLSX.utils.book_append_sheet(wb, ws, 'Statement'); XLSX.writeFile(wb, 'Bank_Statement_Split.xlsx');
+      toast('Excel exported!', 'success');
+    }
+
+    // ═══════════════════════════════
+    //  TIFFIN — PDF MUSTER ROLL PARSER
+    // ═══════════════════════════════
+    function dropTif(e) { e.preventDefault(); document.getElementById('tif-drop').classList.remove('drag-over'); const f = e.dataTransfer.files[0]; if (f && f.type === 'application/pdf') handleTifPDFFile(f); else toast('Please drop a PDF file.', 'error'); }
+    function handleTifPDF(e) { if (e.target.files[0]) handleTifPDFFile(e.target.files[0]); e.target.value = ''; }
+
+    async function handleTifPDFFile(file) {
+      const proc = document.getElementById('tif-processing');
+      const msg = document.getElementById('tif-proc-msg');
+      proc.style.display = 'block';
+      msg.textContent = 'Reading PDF pages...';
+      try {
+        const ab = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
+        const numPages = pdf.numPages;
+        // Extract all text items with position info from all pages
+        let allRows = [];
+        for (let p = 1; p <= numPages; p++) {
+          msg.textContent = `Reading page ${p} of ${numPages}...`;
+          const page = await pdf.getPage(p);
+          const tc = await page.getTextContent();
+          // Group items by Y position (row detection)
+          const yMap = {};
+          tc.items.forEach(item => {
+            const y = Math.round(item.transform[5]);
+            if (!yMap[y]) yMap[y] = [];
+            yMap[y].push({ str: item.str.trim(), x: Math.round(item.transform[4]) });
+          });
+          const ys = Object.keys(yMap).map(Number).sort((a, b) => b - a);
+          ys.forEach(y => {
+            const cells = yMap[y].sort((a, b) => a.x - b.x).map(i => i.str).filter(s => s.length > 0);
+            if (cells.length > 2) allRows.push(cells);
+          });
+        }
+        msg.textContent = 'Detecting staff and punch times...';
+        const records = parseMusterRoll(allRows);
+        S.tiffin = records; save();
+        msg.textContent = 'Calculating tiffin allowances...';
+        processTifResults();
+        document.getElementById('tif-pdf-strip').style.display = 'flex';
+        document.getElementById('tif-strip-name').textContent = file.name;
+        const names = [...new Set(records.map(r => r.name))];
+        document.getElementById('tif-strip-info').textContent = `${numPages} pages · ${names.length} staff · ${records.length} punch records`;
+        toast(`Parsed ${names.length} staff from ${numPages}-page PDF!`, 'success');
+      } catch (err) {
+        console.error(err);
+        toast('PDF parsing error. Check the file.', 'error');
+      }
+      proc.style.display = 'none';
+    }
+
+    // Parse muster roll rows — detects staff names and time pairs
+    function parseMusterRoll(rows) {
+      const records = [];
+
+      // Time-like cell: HH:MM, H:MM, or decimal serial (0.25 = 6:00 AM)
+      function isTime(str) {
+        const s = str.trim();
+        if (/^([01]?\d|2[0-3])[:.][0-5]\d(\s*(am|pm))?$/i.test(s)) return true;
+        const n = parseFloat(s);
+        if (!isNaN(n) && n > 0 && n < 1) return true; // Excel time serial
+        return false;
+      }
+      function cellToTime(str) {
+        const s = str.trim();
+        const n = parseFloat(s);
+        if (!isNaN(n) && n > 0 && n < 1) {
+          const totalMins = Math.round(n * 24 * 60);
+          const h = Math.floor(totalMins / 60), m = totalMins % 60;
+          return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        }
+        // Normalize colon/dot separator and strip am/pm
+        return s.replace(/\./, ':').replace(/\s*(am|pm)/i, '').trim();
+      }
+
+      // Step 1: Find header rows that contain dates (1–31) to map column → day
+      // Also detect month and year from any cell like "October 2025", "Oct-25", "10/2025"
+      let headerDates = [];
+      let detectedMonth = '??', detectedYear = '????';
+      const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+
+      rows.forEach(row => {
+        const fullRow = row.join(' ');
+        // Try to detect month/year anywhere in the row
+        monthNames.forEach((mn, mi) => {
+          const rx = new RegExp(mn + '[a-z]*[\\s\\-\\/]*(20\\d{2}|\\d{2})', 'i');
+          const m = fullRow.match(rx);
+          if (m) {
+            detectedMonth = String(mi + 1).padStart(2, '0');
+            const yr = m[1]; detectedYear = yr.length === 2 ? '20' + yr : yr;
+          }
+        });
+        // "10/2025" or "10-2025"
+        const myrx = fullRow.match(/\b(0?[1-9]|1[0-2])[\/\-](20\d{2})\b/);
+        if (myrx) { detectedMonth = String(parseInt(myrx[1])).padStart(2, '0'); detectedYear = myrx[2]; }
+
+        // Detect date header row: many cells that are numbers 1–31
+        const nums = row.map(c => parseInt(c.trim())).filter(n => !isNaN(n) && n >= 1 && n <= 31);
+        if (nums.length >= 10) headerDates = nums;
+      });
+
+      // Step 2: Find staff rows — first cell is a name, rest contain time pairs
+      rows.forEach(row => {
+        if (row.length < 3) return;
+        const first = row[0].trim();
+
+        // Name cell rules:
+        // - At least 3 chars, max 50
+        // - Not purely numeric
+        // - Not a known header keyword
+        if (first.length < 3 || first.length > 50) return;
+        if (/^\d+$/.test(first)) return;
+        if (/^(date|day|name|staff|in|out|time|sl|sno|s\.no|total|present|absent|month|year)$/i.test(first)) return;
+        if (/^(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i.test(first) && first.length < 6) return;
+
+        const name = first.replace(/\s+/g, ' ');
+
+        // Collect time cells from the rest of the row
+        const timeCells = row.slice(1).filter(c => isTime(c));
+        if (timeCells.length < 2) return;
+
+        // Pair times as IN / OUT for each day
+        const dayMap = headerDates.length > 0 ? headerDates :
+          Array.from({ length: Math.floor(timeCells.length / 2) }, (_, i) => i + 1);
+
+        for (let i = 0; i + 1 < timeCells.length; i += 2) {
+          const dayIdx = Math.floor(i / 2);
+          const day = dayMap[dayIdx] || dayIdx + 1;
+          const dateStr = `${String(day).padStart(2, '0')}/${detectedMonth}/${detectedYear}`;
+          records.push({
+            name,
+            date: dateStr,
+            inTime: cellToTime(timeCells[i]),
+            outTime: cellToTime(timeCells[i + 1])
+          });
+        }
+      });
+
+      return records;
+    }
+
+    // Calculate tiffin from S.tiffin records
+    function processTifResults() {
+      const records = S.tiffin || [];
+      if (!records.length) return;
+      const set = S.settings;
+      const toMins = t => { const p = t.split(':'); return parseInt(p[0]) * 60 + parseInt(p[1] || 0); };
+      const stayEveM = toMins(set.stayEve || '18:00');
+      const stayNightM = toMins(set.stayNight || '20:00');
+      const noonM = toMins(set.noonCut || '12:00');
+      const tif50 = Number(set.tif50) || 50;
+      const tif20 = Number(set.tif20) || 20;
+
+      function getCutoff(name) {
+        const s = S.staff.find(x => x.name.toLowerCase() === name.toLowerCase());
+        if (s && s.tifRelief) { const p = s.tifRelief.split(':'); return parseInt(p[0]) * 60 + parseInt(p[1]); }
+        if (s && s.gender === 'women') { const p = (set.graceWomen || '06:20').split(':'); return parseInt(p[0]) * 60 + parseInt(p[1]); }
+        if (s && s.gender === 'special') { const p = (set.graceSpecial || '06:30').split(':'); return parseInt(p[0]) * 60 + parseInt(p[1]); }
+        const p = (set.graceGent || '06:10').split(':'); return parseInt(p[0]) * 60 + parseInt(p[1]);
+      }
+
+      // Group by staff name
+      const byStaff = {};
+      records.forEach(r => {
+        if (!r.name) return;
+        if (!byStaff[r.name]) byStaff[r.name] = [];
+        byStaff[r.name].push(r);
+      });
+
+      const results = [];
+      for (const [name, recs] of Object.entries(byStaff)) {
+        const cutoff = getCutoff(name);
+        let morningDays = 0, eveningDays = 0, bothDays = 0, zeroDays = 0;
+        const days = recs.map(rec => {
+          const inM = parseTimeToMins(rec.inTime);
+          const outM = parseTimeToMins(rec.outTime);
+          if (inM === null || outM === null) return { ...rec, earned: 0, getMorning: false, getEvening: false, reason: 'Invalid time' };
+          const getMorning = inM <= cutoff && outM >= stayEveM;
+          const getEvening = inM < noonM && outM >= stayNightM;
+          let earned = 0;
+          if (getMorning) { earned += tif50; morningDays++; }
+          if (getEvening) { earned += tif20; eveningDays++; }
+          if (getMorning && getEvening) bothDays++;
+          if (!getMorning && !getEvening) {
+            zeroDays++;
+            const reason = inM > cutoff && outM >= stayNightM ? 'Late arrival (missed morning)' :
+              inM >= noonM && outM >= stayNightM ? 'Arrived after noon' :
+                outM < stayEveM ? 'Left before 6 PM' : 'Not qualified';
+            return { ...rec, inM, outM, earned: 0, getMorning: false, getEvening: false, reason };
+          }
+          return { ...rec, inM, outM, earned, getMorning, getEvening, reason: '' };
+        });
+        const total = days.reduce((a, d) => a + d.earned, 0);
+        results.push({ name, days, total, morningDays, eveningDays, bothDays, zeroDays, cutoff });
+      }
+      S.tifResults = results; save();
+      renderTifAccordion(results);
+      const ts = results.reduce((a, r) => a + r.total, 0);
+      document.getElementById('tif-summary-bar').style.display = 'block';
+      document.getElementById('ts-staff').textContent = results.length;
+      document.getElementById('ts-total').textContent = fmt(ts);
+      document.getElementById('ts-50').textContent = results.reduce((a, r) => a + r.morningDays, 0);
+      document.getElementById('ts-20').textContent = results.reduce((a, r) => a + r.eveningDays, 0);
+      document.getElementById('ts-70').textContent = results.reduce((a, r) => a + r.bothDays, 0);
+    }
+
+    // ── ACCORDION RENDER ──
+    function renderTifAccordion(results) {
+      const el = document.getElementById('tif-results');
+      if (!results.length) { el.innerHTML = ''; return; }
+      el.innerHTML = results.map((r, ri) => {
+        const staffObj = S.staff.find(s => s.name.toLowerCase() === r.name.toLowerCase());
+        const col = staffObj ? staffObj.color : '#64748b';
+        const safeId = 'acc_' + ri;
+        return `
+    <div class="tif-acc-item" id="item_${safeId}">
+      <!-- Header: click to toggle -->
+      <div class="tif-acc-header" id="hdr_${safeId}" onclick="toggleAcc('${safeId}',${ri})">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="av" style="background:${col};width:38px;height:38px;font-size:.92rem;">${r.name[0].toUpperCase()}</div>
+          <div>
+            <div style="font-weight:800;font-size:.95rem;color:#1e293b;">${r.name}</div>
+            <div style="font-size:.72rem;color:#64748b;margin-top:2px;">
+              ${r.days.length} day${r.days.length !== 1 ? 's' : ''} ·
+              <span style="color:#059669;">₹50×${r.morningDays}</span> ·
+              <span style="color:#2563eb;">₹20×${r.eveningDays}</span>
+              ${r.bothDays ? `· <span style="color:#7c3aed;">₹70×${r.bothDays}</span>` : ''}
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div style="background:linear-gradient(135deg,var(--saffron),var(--gold));color:#fff;padding:7px 18px;border-radius:20px;font-size:1rem;font-weight:800;" id="total_${safeId}">
+            ${fmt(r.total)}
+          </div>
+          <i data-lucide="chevron-down" style="width:18px;height:18px;color:#94a3b8;transition:transform .25s;" id="chev_${safeId}"></i>
+        </div>
+      </div>
+      <!-- Body: day-by-day editable table -->
+      <div class="tif-acc-body" id="body_${safeId}">
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;min-width:520px;">
+            <thead><tr>
+              <th style="background:#f8fafc;padding:8px 14px;text-align:left;font-size:.68rem;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:2px solid #e2e8f0;width:18%;">Date</th>
+              <th style="background:#f8fafc;padding:8px 14px;text-align:left;font-size:.68rem;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:2px solid #e2e8f0;width:18%;">Enter</th>
+              <th style="background:#f8fafc;padding:8px 14px;text-align:left;font-size:.68rem;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:2px solid #e2e8f0;width:18%;">Exit</th>
+              <th style="background:#f8fafc;padding:8px 14px;text-align:left;font-size:.68rem;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:2px solid #e2e8f0;width:14%;">Status</th>
+              <th style="background:#f8fafc;padding:8px 14px;text-align:right;font-size:.68rem;font-weight:700;color:#64748b;text-transform:uppercase;border-bottom:2px solid #e2e8f0;width:16%;">Amount (₹)</th>
+            </tr></thead>
+            <tbody>
+              ${r.days.map((d, di) => `
+                <tr style="border-bottom:1px solid #f1f5f9;">
+                  <td style="padding:9px 14px;font-size:.8rem;color:#475569;">${d.date}</td>
+                  <td style="padding:9px 14px;font-size:.82rem;font-weight:600;color:#1e293b;">${d.inTime || '—'}</td>
+                  <td style="padding:9px 14px;font-size:.82rem;font-weight:600;color:#1e293b;">${d.outTime || '—'}</td>
+                  <td style="padding:9px 14px;">
+                    ${d.getMorning && d.getEvening ? '<span class="badge bg-purple">₹70</span>' :
+            d.getMorning ? '<span class="badge bg-green">₹50</span>' :
+              d.getEvening ? '<span class="badge bg-blue">₹20</span>' :
+                `<span class="badge bg-gray" title="${d.reason || '—'}">₹0</span>`}
+                  </td>
+                  <td style="padding:9px 14px;text-align:right;">
+                    <input type="number" class="tif-amt-input" value="${d.earned}"
+                      min="0" step="10"
+                      onchange="updateDayAmt('${safeId}',${ri},${di},this.value)"
+                      title="Edit tiffin amount for this day">
+                  </td>
+                </tr>`).join('')}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="4" style="padding:10px 14px;font-weight:800;font-size:.88rem;color:#475569;background:#f8fafc;">TOTAL</td>
+                <td style="padding:10px 14px;text-align:right;font-weight:800;font-size:.95rem;color:var(--saffron);background:#f8fafc;" id="foot_${safeId}">${fmt(r.total)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>`;
+      }).join('');
+      lucide.createIcons();
+    }
+
+    // Toggle accordion open/close
+    function toggleAcc(safeId, ri) {
+      const body = document.getElementById('body_' + safeId);
+      const hdr = document.getElementById('hdr_' + safeId);
+      const item = document.getElementById('item_' + safeId);
+      const chev = document.getElementById('chev_' + safeId);
+      const isOpen = body.classList.contains('show');
+      // Close all others
+      document.querySelectorAll('.tif-acc-body.show').forEach(b => b.classList.remove('show'));
+      document.querySelectorAll('.tif-acc-header.expanded').forEach(h => h.classList.remove('expanded'));
+      document.querySelectorAll('.tif-acc-item.expanded').forEach(i => i.classList.remove('expanded'));
+      document.querySelectorAll('[id^="chev_"]').forEach(c => { c.style.transform = ''; });
+      if (!isOpen) {
+        body.classList.add('show');
+        hdr.classList.add('expanded');
+        item.classList.add('expanded');
+        if (chev) chev.style.transform = 'rotate(180deg)';
+      }
+    }
+
+    // Live-edit a day's tiffin amount
+    function updateDayAmt(safeId, ri, di, val) {
+      if (!S.tifResults || !S.tifResults[ri]) return;
+      const newAmt = parseFloat(val) || 0;
+      S.tifResults[ri].days[di].earned = newAmt;
+      // Recalculate total for this staff
+      const newTotal = S.tifResults[ri].days.reduce((a, d) => a + d.earned, 0);
+      S.tifResults[ri].total = newTotal;
+      save();
+      // Update total display
+      const totalEl = document.getElementById('total_' + safeId);
+      if (totalEl) totalEl.textContent = fmt(newTotal);
+      const footEl = document.getElementById('foot_' + safeId);
+      if (footEl) footEl.textContent = fmt(newTotal);
+      // Update summary bar
+      const grandTotal = S.tifResults.reduce((a, r) => a + r.total, 0);
+      document.getElementById('ts-total').textContent = fmt(grandTotal);
+    }
+
+    function loadTifSample() {
+      S.tiffin = [
+        { name: 'Ravi Kumar', date: '01/10/2025', inTime: '06:05', outTime: '20:15' },
+        { name: 'Ravi Kumar', date: '02/10/2025', inTime: '06:00', outTime: '18:30' },
+        { name: 'Ravi Kumar', date: '03/10/2025', inTime: '06:15', outTime: '20:00' },
+        { name: 'Ravi Kumar', date: '04/10/2025', inTime: '06:08', outTime: '17:45' },
+        { name: 'Ravi Kumar', date: '05/10/2025', inTime: '13:00', outTime: '20:30' },
+        { name: 'Priya Devi', date: '01/10/2025', inTime: '06:18', outTime: '20:10' },
+        { name: 'Priya Devi', date: '02/10/2025', inTime: '06:22', outTime: '20:00' },
+        { name: 'Priya Devi', date: '03/10/2025', inTime: '06:15', outTime: '18:05' },
+        { name: 'Priya Devi', date: '04/10/2025', inTime: '07:00', outTime: '20:00' },
+        { name: 'Priya Devi', date: '05/10/2025', inTime: '06:10', outTime: '17:30' },
+        { name: 'Suresh Special', date: '01/10/2025', inTime: '06:28', outTime: '20:05' },
+        { name: 'Suresh Special', date: '02/10/2025', inTime: '06:32', outTime: '20:00' },
+        { name: 'Suresh Special', date: '03/10/2025', inTime: '06:25', outTime: '18:00' },
+        { name: 'Meena', date: '01/10/2025', inTime: '06:19', outTime: '20:30' },
+        { name: 'Meena', date: '02/10/2025', inTime: '09:00', outTime: '20:00' },
+        { name: 'Meena', date: '03/10/2025', inTime: '06:15', outTime: '15:00' },
+      ];
+      // Tag genders for sample
+      ['Priya Devi', 'Meena'].forEach(n => { const s = S.staff.find(x => x.name.toLowerCase() === n.toLowerCase()); if (s) { s.gender = 'women'; save(); } });
+      const su = S.staff.find(x => x.name.toLowerCase().includes('suresh')); if (su) { su.gender = 'special'; save(); }
+      save();
+      processTifResults();
+      document.getElementById('tif-pdf-strip').style.display = 'flex';
+      document.getElementById('tif-strip-name').textContent = 'Sample Data (Demo)';
+      document.getElementById('tif-strip-info').textContent = `4 staff · ${S.tiffin.length} punch records`;
+      toast('Sample data loaded!', 'success');
+    }
+
+    function clearTiffin() {
+      S.tiffin = []; S.tifResults = null; save();
+      document.getElementById('tif-results').innerHTML = '';
+      document.getElementById('tif-summary-bar').style.display = 'none';
+      document.getElementById('tif-pdf-strip').style.display = 'none';
+      toast('Tiffin data cleared.', 'info');
+    }
+    function updateTifRuleDisplay() {
+      const set = S.settings;
+      const g = document.getElementById('rule-gents'); const w = document.getElementById('rule-women'); const sp = document.getElementById('rule-special');
+      if (g) g.textContent = set.graceGent || '06:10';
+      if (w) w.textContent = set.graceWomen || '06:20';
+      if (sp) sp.textContent = set.graceSpecial || '06:30';
+    }
+    function exportTifExcel() {
+      if (!S.tifResults?.length) { toast('Calculate tiffin first.', 'error'); return; }
+      const wb = XLSX.utils.book_new();
+      const sum = [['Staff Name', '₹50 Days', '₹20 Days', '₹70 Days', '₹0 Days', 'Total Tiffin']];
+      S.tifResults.forEach(r => sum.push([r.name, r.morningDays, r.eveningDays, r.bothDays, r.zeroDays, r.total]));
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sum), 'Summary');
+      S.tifResults.forEach(r => {
+        const rows = [['Date', 'Enter', 'Exit', 'Morning ₹50', 'Evening ₹20', 'Amount (Edited)']];
+        r.days.forEach(d => rows.push([d.date, d.inTime, d.outTime, d.getMorning ? 'Yes' : 'No', d.getEvening ? 'Yes' : 'No', d.earned]));
+        rows.push([]); rows.push(['TOTAL', '', '', '', '', r.total]);
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), r.name.slice(0, 28));
+      });
+      XLSX.writeFile(wb, 'Tiffin_Allowance_Report.xlsx');
+      toast('Tiffin report exported!', 'success');
+    }
+    function parseTimeToMins(str) {
+      if (!str) return null;
+      str = String(str).trim();
+      if (!isNaN(str) && parseFloat(str) > 0 && parseFloat(str) < 1) return Math.round(parseFloat(str) * 24 * 60);
+      const pm = str.toLowerCase().includes('pm'); const am = str.toLowerCase().includes('am');
+      const clean = str.replace(/[apm\s]/gi, '').trim();
+      const parts = clean.split(/[:\.]/); if (parts.length < 2) return null;
+      let h = parseInt(parts[0]), m = parseInt(parts[1]) || 0;
+      if (pm && h !== 12) h += 12; if (am && h === 12) h = 0;
+      return h * 60 + m;
+    }
+
+    // ═══════════════════════════════
+    //  STAFF PAYROLL
+    // ═══════════════════════════════
+    function importStaffExcel(e) {
+      const file = e.target.files[0]; if (!file) return;
+      const r = new FileReader();
+      r.onload = ev => {
+        const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+        let hdrIdx = 0;
+        for (let i = 0; i < Math.min(json.length, 8); i++) {
+          const row = json[i].map(c => String(c).toLowerCase());
+          if (row.some(c => /name|staff|employee/.test(c))) { hdrIdx = i; break; }
+        }
+        const headers = json[hdrIdx].map(h => String(h).toLowerCase().trim());
+        const rows = json.slice(hdrIdx + 1).filter(r => r.some(c => c !== ''));
+        const ci = {
+          name: headers.findIndex(h => /name|staff name|employee/.test(h)),
+          role: headers.findIndex(h => /role|designation|dept|department|type/.test(h)),
+          base: headers.findIndex(h => /basic|base|gross salary|ctc|salary/.test(h)),
+          present: headers.findIndex(h => /present|days|payable/.test(h)),
+          ot: headers.findIndex(h => /overtime|ot hours/.test(h)),
+        };
+        let imported = 0;
+        rows.forEach(row => {
+          const name = ci.name >= 0 ? String(row[ci.name] || '').trim() : '';
+          if (!name || /^(total|sl|s\.no)/i.test(name)) return;
+          if (S.staff.find(s => s.name.toLowerCase() === name.toLowerCase())) return;
+          S.staff.push({
+            id: 's_' + Date.now() + '_' + Math.random().toString(36).slice(2),
+            name, role: ci.role >= 0 ? String(row[ci.role] || '') : 'Staff',
+            payType: 'monthly', base: parseFloat(String(row[ci.base] || '0').replace(/[,₹]/g, '')) || 0,
+            attendanceDays: ci.present >= 0 ? (parseFloat(row[ci.present]) || null) : null,
+            overtimeHours: ci.ot >= 0 ? (parseFloat(row[ci.ot]) || 0) : 0,
+            phone: '', joinDate: '', gender: 'gent', tifRelief: '',
+            color: COLORS[S.staff.length % COLORS.length],
+            exemptions: [], advances: [], overrides: { pf: null, esi: null, tds: null, hra: null }
+          }); imported++;
+        });
+        save(); renderStaffList();
+        document.getElementById('staff-import-banner').style.display = 'block';
+        document.getElementById('import-banner-title').textContent = `${imported} staff members imported from Excel`;
+        document.getElementById('import-banner-sub').textContent = `Total staff: ${S.staff.length}. Click any name to edit.`;
+        document.getElementById('staff-count').textContent = S.staff.length;
+        toast(`Imported ${imported} staff!`, 'success');
+      }; r.readAsArrayBuffer(file); e.target.value = '';
+    }
+    function openAddStaff() { ['ns-name', 'ns-role', 'ns-phone', 'ns-relief'].forEach(id => document.getElementById(id).value = ''); document.getElementById('ns-base').value = ''; document.getElementById('ns-join').value = ''; openModal('add-staff-modal'); }
+    function saveNewStaff() {
+      const name = document.getElementById('ns-name').value.trim(); if (!name) { toast('Name required.', 'error'); return; }
+      S.staff.push({
+        id: 's_' + Date.now(), name, role: document.getElementById('ns-role').value.trim(),
+        payType: document.getElementById('ns-paytype').value, base: parseFloat(document.getElementById('ns-base').value) || 0,
+        phone: document.getElementById('ns-phone').value.trim(), joinDate: document.getElementById('ns-join').value,
+        gender: document.getElementById('ns-gender').value, tifRelief: document.getElementById('ns-relief').value,
+        color: COLORS[S.staff.length % COLORS.length],
+        exemptions: [], advances: [], overrides: { pf: null, esi: null, tds: null, hra: null },
+        attendanceDays: null, overtimeHours: 0
+      });
+      save(); closeModal('add-staff-modal'); renderStaffList(); selectStaff(S.staff[S.staff.length - 1].id);
+      toast(`${name} added!`, 'success');
+    }
+    function renderStaffList() {
+      const q = (document.getElementById('staff-srch')?.value || '').toLowerCase();
+      const filtered = S.staff.filter(s => s.name.toLowerCase().includes(q) || (s.role || '').toLowerCase().includes(q));
+      document.getElementById('staff-count').textContent = S.staff.length;
+      const el = document.getElementById('staff-list-body');
+      if (!filtered.length) { el.innerHTML = `<div style="padding:28px;text-align:center;color:#94a3b8;font-size:.78rem;">${S.staff.length ? 'No matches.' : 'No staff yet.'}</div>`; return; }
+      el.innerHTML = filtered.map(s => `
+    <div class="staff-item ${S.currentStaff === s.id ? 'active' : ''}" onclick="selectStaff('${s.id}')">
+      <div class="av" style="background:${s.color};">${s.name[0].toUpperCase()}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:600;font-size:.82rem;">${s.name}</div>
+        <div style="font-size:.68rem;color:#94a3b8;">${s.role || 'Staff'} · ${(S.settings.cur || '₹') + fmtN(s.base)}/${s.payType === 'daily' ? 'day' : s.payType === 'task' ? 'task' : 'mo'}</div>
+      </div>
+      <button onclick="event.stopPropagation();deleteStaff('${s.id}')" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:3px;opacity:.5;">
+        <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
+      </button>
+    </div>`).join('');
+      lucide.createIcons();
+    }
+    function selectStaff(id) { S.currentStaff = id; save(); renderStaffList(); const s = S.staff.find(x => x.id === id); if (s) renderStaffDetail(s); }
+    function renderStaffDetail(s) {
+      document.getElementById('staff-detail').innerHTML = `
+    <div style="display:flex;flex-direction:column;height:100%;">
+      <div style="display:flex;align-items:center;gap:14px;padding:20px 24px;background:#f8fafc;border-bottom:1px solid #e2e8f0;">
+        <div class="av" style="background:${s.color};width:50px;height:50px;font-size:1.2rem;">${s.name[0].toUpperCase()}</div>
+        <div style="flex:1;"><div style="font-size:1rem;font-weight:800;">${s.name}</div>
+          <div style="font-size:.74rem;color:#64748b;">${s.role || 'Staff'} · ${s.gender === 'women' ? 'Women' : s.gender === 'special' ? 'Special Relief' : 'Gents'}</div></div>
+        <button class="btn btn-g" onclick="genSlip('${s.id}')" style="padding:7px 13px;font-size:.75rem;"><i data-lucide="printer" style="width:13px;height:13px;"></i> Pay Slip</button>
+        <button class="btn btn-r" onclick="deleteStaff('${s.id}')" style="padding:7px 11px;"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab(this,'tp-pay')">Pay Details</button>
+        <button class="tab-btn" onclick="switchTab(this,'tp-ex')">Exemptions</button>
+        <button class="tab-btn" onclick="switchTab(this,'tp-adv')">Advances</button>
+        <button class="tab-btn" onclick="switchTab(this,'tp-sum')">Summary</button>
+      </div>
+      <div class="tab-c active" id="tp-pay">
+        <div class="frow">
+          <div class="fgroup"><label class="flabel">Pay Type</label>
+            <select class="fsel" onchange="updStaff('${s.id}','payType',this.value)">
+              <option value="monthly" ${s.payType === 'monthly' ? 'selected' : ''}>Monthly Salary</option>
+              <option value="daily" ${s.payType === 'daily' ? 'selected' : ''}>Daily Wage</option>
+              <option value="task" ${s.payType === 'task' ? 'selected' : ''}>Task Rate</option>
+            </select>
+          </div>
+          <div class="fgroup"><label class="flabel">Base (${S.settings.cur || '₹'})</label>
+            <input type="number" class="fi" value="${s.base || 0}" oninput="updStaff('${s.id}','base',parseFloat(this.value)||0)">
+          </div>
+        </div>
+        <div class="frow">
+          <div class="fgroup"><label class="flabel">Attendance Days</label>
+            <input type="number" class="fi" value="${s.attendanceDays ?? ''}" placeholder="Default: ${S.settings.wdays}" oninput="updStaff('${s.id}','attendanceDays',this.value===''?null:parseFloat(this.value))">
+          </div>
+          <div class="fgroup"><label class="flabel">Overtime Hours</label>
+            <input type="number" class="fi" value="${s.overtimeHours || 0}" oninput="updStaff('${s.id}','overtimeHours',parseFloat(this.value)||0)">
+          </div>
+        </div>
+        <div class="frow">
+          <div class="fgroup"><label class="flabel">Gender / Tiffin Category</label>
+            <select class="fsel" onchange="updStaff('${s.id}','gender',this.value)">
+              <option value="gent" ${s.gender === 'gent' ? 'selected' : ''}>Gents (${S.settings.graceGent || '06:10'})</option>
+              <option value="women" ${s.gender === 'women' ? 'selected' : ''}>Women (${S.settings.graceWomen || '06:20'})</option>
+              <option value="special" ${s.gender === 'special' ? 'selected' : ''}>Special (${S.settings.graceSpecial || '06:30'})</option>
+            </select>
+          </div>
+          <div class="fgroup"><label class="flabel">Custom Tiffin Cutoff</label>
+            <input type="time" class="fi" value="${s.tifRelief || ''}" oninput="updStaff('${s.id}','tifRelief',this.value)">
+          </div>
+        </div>
+        <div style="padding:14px;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;">
+          <div style="font-size:.7rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Custom Deduction % for ${s.name}</div>
+          <div class="frow">
+            ${['pf', 'esi', 'tds', 'hra'].map(k => `
+              <div class="fgroup"><label class="flabel">${k.toUpperCase()} Override %</label>
+                <input type="number" class="fi" value="${s.overrides && s.overrides[k] !== null ? s.overrides[k] : ''}" placeholder="Global" step="0.1" min="0" oninput="updOv('${s.id}','${k}',this.value)">
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div class="tab-c" id="tp-ex">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="font-weight:700;font-size:.85rem;">Exemptions for ${s.name}</div>
+          <button class="btn btn-p" style="padding:7px 13px;font-size:.75rem;" onclick="openEx('${s.id}')"><i data-lucide="plus" style="width:13px;height:13px;"></i> Add</button>
+        </div>
+        <div id="ex-list">${renderExList(s)}</div>
+      </div>
+      <div class="tab-c" id="tp-adv">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div><div style="font-weight:700;font-size:.85rem;">Advances for ${s.name}</div>
+            <div style="font-size:.72rem;color:#64748b;">Outstanding: ${fmt((s.advances || []).reduce((a, x) => a + x.amount, 0))}</div>
+          </div>
+          <button class="btn btn-p" style="padding:7px 13px;font-size:.75rem;" onclick="openAdv('${s.id}')"><i data-lucide="plus" style="width:13px;height:13px;"></i> Record</button>
+        </div>
+        <div id="adv-list">${renderAdvList(s)}</div>
+      </div>
+      <div class="tab-c" id="tp-sum">${renderSummary(s)}</div>
+    </div>`;
+      lucide.createIcons();
+    }
+    function renderExList(s) {
+      if (!s.exemptions?.length) return '<div style="padding:24px;text-align:center;color:#94a3b8;font-size:.8rem;">No exemptions added.</div>';
+      return s.exemptions.map((ex, i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:11px 14px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;margin-bottom:7px;">
+      <span style="background:linear-gradient(90deg,var(--saffron),var(--gold));color:#fff;padding:2px 9px;border-radius:20px;font-size:.65rem;font-weight:700;">${ex.type}</span>
+      <div style="flex:1;"><div style="font-weight:600;font-size:.82rem;">${ex.label}</div></div>
+      <button onclick="delEx('${s.id}',${i})" style="background:none;border:none;cursor:pointer;color:#ef4444;padding:3px;"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button>
+    </div>`).join('');
+    }
+    function renderAdvList(s) {
+      if (!s.advances?.length) return '<div style="padding:24px;text-align:center;color:#94a3b8;font-size:.8rem;">No advances.</div>';
+      return s.advances.map((a, i) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;background:#fef3c7;border-radius:10px;border:1px solid #fde68a;margin-bottom:7px;">
+      <div><div style="font-weight:800;font-size:.88rem;color:#92400e;">${fmt(a.amount)}</div>
+        <div style="font-size:.7rem;color:#a16207;">${a.date} · ${a.deduct} · ${a.note || ''}</div></div>
+      <button onclick="delAdv('${s.id}',${i})" style="background:none;border:none;cursor:pointer;color:#92400e;padding:3px;"><i data-lucide="trash-2" style="width:13px;height:13px;"></i></button>
+    </div>`).join('');
+    }
+    function renderSummary(s) {
+      const calc = calcPay(s); const c = S.settings.cur || '₹';
+      return `
+    <div class="pay-sum">
+      <div style="font-size:.68rem;font-weight:700;letter-spacing:1.5px;opacity:.55;margin-bottom:14px;">PAY BREAKDOWN — ${s.name.toUpperCase()}</div>
+      ${calc.rows.map(r => `<div class="pay-row"><span>${r.label}</span>
+        <span style="color:${r.sign === '+' ? '#6ee7b7' : r.sign === '-' ? '#fca5a5' : 'var(--gold)'};">${r.sign || ''}${c}${fmtN(Math.abs(r.value))}</span>
+      </div>`).join('')}
+    </div>
+    <button class="btn btn-g" onclick="genSlip('${s.id}')" style="margin-top:12px;"><i data-lucide="printer" style="width:13px;height:13px;"></i> Print Pay Slip</button>`;
+    }
+    function calcPay(s) {
+      const set = S.settings; const ov = s.overrides || {};
+      const skipPF = (s.exemptions || []).some(e => e.type === 'override' && e.ovRule === 'pf');
+      const skipESI = (s.exemptions || []).some(e => e.type === 'override' && e.ovRule === 'esi');
+      const skipTDS = (s.exemptions || []).some(e => e.type === 'override' && e.ovRule === 'tds');
+      const skipAdv = (s.exemptions || []).some(e => e.type === 'override' && e.ovRule === 'adv');
+      const days = s.attendanceDays !== null && s.attendanceDays !== undefined ? s.attendanceDays : set.wdays;
+      const wd = set.wdays || 26;
+      let base = s.payType === 'monthly' ? (s.base * days / wd) : s.payType === 'daily' ? (s.base * days) : s.base;
+      const rows = [{ label: `Base Pay (${days}d)`, value: base, sign: '+' }];
+      if (set.tHra) { const r = ov.hra !== null && ov.hra !== undefined ? ov.hra : set.hra; const v = base * r / 100; rows.push({ label: `HRA (${r}%)`, value: v, sign: '+' }); base += v; }
+      if (s.overtimeHours > 0) { const v = (s.base / wd / 8) * s.overtimeHours * (set.otRate || 1.5); rows.push({ label: `OT (${s.overtimeHours}h×${set.otRate}x)`, value: v, sign: '+' }); base += v; }
+      const tifRes = S.tifResults?.find(r => r.name.toLowerCase() === s.name.toLowerCase());
+      if (tifRes && tifRes.total > 0) { rows.push({ label: 'Tiffin Allowance', value: tifRes.total, sign: '+' }); base += tifRes.total; }
+      let gross = base;
+      (s.exemptions || []).forEach(ex => {
+        if (ex.type === 'flat') { rows.push({ label: ex.label, value: ex.value, sign: '+' }); gross += ex.value; }
+        if (ex.type === 'deduct') { rows.push({ label: ex.label, value: ex.value, sign: '-' }); gross -= ex.value; }
+        if (ex.type === 'pct_add') { const v = gross * ex.value / 100; rows.push({ label: `${ex.label}(${ex.value}%)`, value: v, sign: '+' }); gross += v; }
+        if (ex.type === 'pct_ded') { const v = gross * ex.value / 100; rows.push({ label: `${ex.label}(${ex.value}%)`, value: v, sign: '-' }); gross -= v; }
+      });
+      rows.push({ label: 'Gross Pay', value: gross });
+      let pf = 0, esi = 0, tds = 0;
+      if (set.tPf && !skipPF) { const r = ov.pf !== null && ov.pf !== undefined ? ov.pf : set.pf; pf = gross * r / 100; rows.push({ label: `PF (${r}%)`, value: pf, sign: '-' }); }
+      if (set.tEsi && !skipESI) { const r = ov.esi !== null && ov.esi !== undefined ? ov.esi : set.esi; esi = gross * r / 100; rows.push({ label: `ESI (${r}%)`, value: esi, sign: '-' }); }
+      if (set.tTds && !skipTDS) { const r = ov.tds !== null && ov.tds !== undefined ? ov.tds : set.tds; tds = gross * r / 100; rows.push({ label: `TDS (${r}%)`, value: tds, sign: '-' }); }
+      let advTotal = 0;
+      if (set.tAdv && !skipAdv) { (s.advances || []).forEach(a => { let d = a.amount; if (a.deduct === 'split2') d /= 2; if (a.deduct === 'split3') d /= 3; if (a.deduct === 'manual') d = 0; advTotal += d; }); }
+      if (advTotal > 0) rows.push({ label: 'Advance Recovery', value: advTotal, sign: '-' });
+      let net = gross - pf - esi - tds - advTotal;
+      if (set.tRound) net = Math.round(net);
+      rows.push({ label: 'NET PAY', value: Math.max(0, net) });
+      return { rows, net: Math.max(0, net) };
+    }
+    function switchTab(btn, tabId) {
+      const det = document.getElementById('staff-detail');
+      if (det) { det.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); det.querySelectorAll('.tab-c').forEach(t => t.classList.remove('active')); }
+      btn.classList.add('active'); const target = document.getElementById(tabId); if (target) target.classList.add('active');
+      if (tabId === 'tp-sum') { const s = S.staff.find(x => x.id === S.currentStaff); if (s && target) { target.innerHTML = renderSummary(s); lucide.createIcons(); } }
+    }
+    function updStaff(id, field, val) { const s = S.staff.find(x => x.id === id); if (s) { s[field] = val; save(); } }
+    function updOv(id, k, v) { const s = S.staff.find(x => x.id === id); if (s) { if (!s.overrides) s.overrides = {}; s.overrides[k] = v === '' ? null : parseFloat(v); save(); } }
+    function deleteStaff(id) {
+      showConfirm('Delete Staff Member?', 'All their data will be permanently removed.', () => {
+        S.staff = S.staff.filter(s => s.id !== id); S.currentStaff = null; save(); renderStaffList();
+        document.getElementById('staff-detail').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#94a3b8;flex-direction:column;gap:10px;padding:40px;"><i data-lucide="mouse-pointer-click" style="width:36px;height:36px;opacity:.4;"></i><p style="font-size:.85rem;">Select a staff member</p></div>';
+        lucide.createIcons(); toast('Staff deleted.', 'info');
+      });
+    }
+    let _exStaff = null;
+    function openEx(id) { _exStaff = id;['ex-label', 'ex-val'].forEach(i => document.getElementById(i).value = ''); openModal('ex-modal'); }
+    function saveExemption() {
+      const label = document.getElementById('ex-label').value.trim(); if (!label) { toast('Label required.', 'error'); return; }
+      const s = S.staff.find(x => x.id === _exStaff); if (!s) return;
+      if (!s.exemptions) s.exemptions = [];
+      s.exemptions.push({ type: document.getElementById('ex-type').value, label, value: parseFloat(document.getElementById('ex-val').value) || 0, ovRule: document.getElementById('ex-ov-rule').value });
+      save(); closeModal('ex-modal'); renderStaffDetail(s); toast('Exemption added!', 'success');
+    }
+    function delEx(id, i) { const s = S.staff.find(x => x.id === id); if (s) { s.exemptions.splice(i, 1); save(); renderStaffDetail(s); } }
+    let _advStaff = null;
+    function openAdv(id) { _advStaff = id;['adv-amt', 'adv-note'].forEach(i => document.getElementById(i).value = ''); document.getElementById('adv-date').value = new Date().toISOString().split('T')[0]; openModal('adv-modal'); }
+    function saveAdvance() {
+      const amt = parseFloat(document.getElementById('adv-amt').value) || 0; if (!amt) { toast('Enter amount.', 'error'); return; }
+      const s = S.staff.find(x => x.id === _advStaff); if (!s) return;
+      if (!s.advances) s.advances = [];
+      s.advances.push({ amount: amt, date: document.getElementById('adv-date').value, note: document.getElementById('adv-note').value, deduct: document.getElementById('adv-deduct').value });
+      save(); closeModal('adv-modal'); renderStaffDetail(s); toast('Advance saved!', 'success');
+    }
+    function delAdv(id, i) { const s = S.staff.find(x => x.id === id); if (s) { s.advances.splice(i, 1); save(); renderStaffDetail(s); } }
+    function genSlip(id) {
+      const s = S.staff.find(x => x.id === id); if (!s) return;
+      const calc = calcPay(s); const c = S.settings.cur || '₹';
+      const html = `<!DOCTYPE html><html><head><title>Pay Slip - ${s.name}</title>
+  <style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:'Segoe UI',sans-serif;padding:36px;color:#1e293b;max-width:640px;margin:auto;}
+  .h{background:linear-gradient(135deg,#12071f,#1e0d36);color:#fff;padding:22px 26px;border-radius:12px;margin-bottom:18px;}
+  .h h1{font-size:1.2rem;font-weight:800;color:#FFB300;}.h p{font-size:.74rem;opacity:.6;margin-top:3px;}
+  .g{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+  .ic{background:#f8fafc;border-radius:8px;padding:12px;}.il{font-size:.64rem;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:3px;}.iv{font-size:.86rem;font-weight:600;}
+  table{width:100%;border-collapse:collapse;}th{background:#f1f5f9;padding:8px 12px;text-align:left;font-size:.66rem;font-weight:700;color:#475569;text-transform:uppercase;border-bottom:2px solid #e2e8f0;}
+  td{padding:8px 12px;border-bottom:1px solid #f1f5f9;font-size:.8rem;}.cr{color:#059669;font-weight:700;}.dr{color:#dc2626;font-weight:700;}
+  tr:last-child td{border:none;font-weight:800;font-size:.92rem;background:#fff9f5;color:#FF6B00;}
+  footer{text-align:center;font-size:.64rem;color:#94a3b8;margin-top:18px;padding-top:12px;border-top:1px solid #f1f5f9;}
+  </style></head><body>
+  <div class="h"><h1>🙏 Durga Shankar is God</h1><p>Staff Portal · Pay Slip</p></div>
+  <div class="g">
+    <div class="ic"><div class="il">Name</div><div class="iv">${s.name}</div></div>
+    <div class="ic"><div class="il">Role</div><div class="iv">${s.role || 'Staff'}</div></div>
+    <div class="ic"><div class="il">Pay Type</div><div class="iv">${s.payType}</div></div>
+    <div class="ic"><div class="il">Attendance</div><div class="iv">${s.attendanceDays ?? S.settings.wdays}/${S.settings.wdays} days</div></div>
+    <div class="ic"><div class="il">Base</div><div class="iv">${c}${fmtN(s.base)}</div></div>
+    <div class="ic"><div class="il">Generated</div><div class="iv">${new Date().toLocaleDateString('en-IN')}</div></div>
+  </div>
+  <table><tr><th>Description</th><th>Amount</th></tr>
+  ${calc.rows.map(r => `<tr><td>${r.label}</td><td class="${r.sign === '+' ? 'cr' : r.sign === '-' ? 'dr' : ''}">${r.sign || ''}${c}${fmtN(Math.abs(r.value))}</td></tr>`).join('')}
+  </table><footer>Durga Shankar is God</footer></body></html>`;
+      const w = window.open('', '_blank', 'width=680,height=760'); w.document.write(html); w.document.close(); w.print();
+    }
+    function exportPayrollExcel() {
+      if (!S.staff.length) { toast('No staff.', 'error'); return; }
+      const rows = [['Name', 'Role', 'Pay Type', 'Base', 'Attendance', 'OT Hours', 'Net Pay']];
+      S.staff.forEach(s => { const calc = calcPay(s); rows.push([s.name, s.role, s.payType, s.base, s.attendanceDays ?? S.settings.wdays, s.overtimeHours, calc.net]); });
+      const wb = XLSX.utils.book_new(); const ws = XLSX.utils.aoa_to_sheet(rows);
+      XLSX.utils.book_append_sheet(wb, ws, 'Payroll'); XLSX.writeFile(wb, 'Payroll_Report.xlsx');
+      toast('Payroll exported!', 'success');
+    }
+
+    // ═══════════════════════════════
+    //  SETTINGS
+    // ═══════════════════════════════
+    function loadSettingsForm() {
+      const s = S.settings;
+      const ids = {
+        's-cur': s.cur || '₹', 's-wdays': s.wdays, 's-ot': s.otRate, 's-pf': s.pf, 's-esi': s.esi, 's-tds': s.tds, 's-hra': s.hra,
+        's-tif50': s.tif50 || 50, 's-tif20': s.tif20 || 20,
+        's-stay-eve': s.stayEve || '18:00', 's-stay-night': s.stayNight || '20:00', 's-noon-cut': s.noonCut || '12:00',
+        's-grace-gent': s.graceGent || '06:10', 's-grace-women': s.graceWomen || '06:20', 's-grace-special': s.graceSpecial || '06:30'
+      };
+      for (const [id, val] of Object.entries(ids)) { const el = document.getElementById(id); if (el) el.value = val; }
+      document.getElementById('t-pf').checked = !!s.tPf; document.getElementById('t-esi').checked = !!s.tEsi;
+      document.getElementById('t-tds').checked = !!s.tTds; document.getElementById('t-hra').checked = !!s.tHra;
+      document.getElementById('t-adv').checked = !!s.tAdv; document.getElementById('t-round').checked = !!s.tRound;
+    }
+    function saveSettings() {
+      S.settings = {
+        cur: document.getElementById('s-cur').value || '₹', wdays: parseFloat(document.getElementById('s-wdays').value) || 26,
+        otRate: parseFloat(document.getElementById('s-ot').value) || 1.5, pf: parseFloat(document.getElementById('s-pf').value) || 12,
+        esi: parseFloat(document.getElementById('s-esi').value) || 0.75, tds: parseFloat(document.getElementById('s-tds').value) || 10,
+        hra: parseFloat(document.getElementById('s-hra').value) || 40, tif50: parseFloat(document.getElementById('s-tif50').value) || 50,
+        tif20: parseFloat(document.getElementById('s-tif20').value) || 20, stayEve: document.getElementById('s-stay-eve').value || '18:00',
+        stayNight: document.getElementById('s-stay-night').value || '20:00', noonCut: document.getElementById('s-noon-cut').value || '12:00',
+        graceGent: document.getElementById('s-grace-gent').value || '06:10', graceWomen: document.getElementById('s-grace-women').value || '06:20',
+        graceSpecial: document.getElementById('s-grace-special').value || '06:30',
+        tPf: document.getElementById('t-pf').checked, tEsi: document.getElementById('t-esi').checked,
+        tTds: document.getElementById('t-tds').checked, tHra: document.getElementById('t-hra').checked,
+        tAdv: document.getElementById('t-adv').checked, tRound: document.getElementById('t-round').checked
+      };
+      save(); renderAssignTable(); updateTifRuleDisplay();
+    }
+    function renderAssignTable() {
+      const tb = document.getElementById('assign-tbody'); const em = document.getElementById('assign-empty');
+      if (!S.staff.length) { tb.innerHTML = ''; em.style.display = 'block'; return; }
+      em.style.display = 'none';
+      tb.innerHTML = S.staff.map(s => {
+        const exemptPF = (s.exemptions || []).some(e => e.type === 'override' && e.ovRule === 'pf');
+        const graceLabel = s.gender === 'women' ? `Women (${S.settings.graceWomen || '06:20'})` : s.gender === 'special' ? `Special (${S.settings.graceSpecial || '06:30'})` : `Gents (${S.settings.graceGent || '06:10'})`;
+        return `<tr onclick="navigate('staff');setTimeout(()=>selectStaff('${s.id}'),300)" style="cursor:pointer;border-bottom:1px solid #f1f5f9;">
+      <td style="padding:10px 13px;"><div style="display:flex;align-items:center;gap:8px;"><div class="av" style="background:${s.color};width:26px;height:26px;font-size:.7rem;">${s.name[0].toUpperCase()}</div><strong style="font-size:.82rem;">${s.name}</strong></div></td>
+      <td style="padding:10px 13px;font-size:.8rem;">${s.role || 'Staff'}</td>
+      <td style="padding:10px 13px;"><span class="badge ${s.gender === 'women' ? 'bg-purple' : s.gender === 'special' ? 'bg-amber' : 'bg-blue'}">${s.gender === 'women' ? 'Women' : s.gender === 'special' ? 'Special' : 'Gents'}</span></td>
+      <td style="padding:10px 13px;font-size:.78rem;">${graceLabel}</td>
+      <td style="padding:10px 13px;"><span class="badge ${s.tifRelief ? 'bg-amber' : 'bg-gray'}">${s.tifRelief || 'Gender default'}</span></td>
+      <td style="padding:10px 13px;">${exemptPF ? '<span class="badge bg-green">EXEMPT</span>' : s.overrides?.pf !== null && s.overrides?.pf !== undefined ? `<span class="badge bg-amber">${s.overrides.pf}%</span>` : '<span class="badge bg-blue">Global</span>'}</td>
+    </tr>`;
+      }).join('');
+    }
+
+    // ═══════════════════════════════
+    //  STORAGE & BACKUP
+    // ═══════════════════════════════
+    function updateStorage() {
+      const b = new Blob([JSON.stringify(S)]).size; const kb = (b / 1024).toFixed(1);
+      const el = document.getElementById('stor-size'); if (el) el.textContent = `${kb} KB used`;
+      const f = document.getElementById('stor-fill'); if (f) f.style.width = Math.min(100, (b / (5 * 1024 * 1024)) * 100) + '%';
+    }
+    function exportAll() {
+      const blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      a.download = `StaffPortal_${new Date().toISOString().split('T')[0]}.json`; a.click(); URL.revokeObjectURL(a.href);
+      toast('Backup exported!', 'success');
+    }
+    function importAll(e) {
+      const file = e.target.files[0]; if (!file) return;
+      const r = new FileReader();
+      r.onload = ev => { try { S = JSON.parse(ev.target.result); save(); navigate('dashboard'); toast('Backup restored!', 'success'); } catch { toast('Invalid file.', 'error'); } };
+      r.readAsText(file); e.target.value = '';
+    }
+    function confirmClear() {
+      showConfirm('Clear ALL Data?', 'Permanently deletes everything.', () => {
+        localStorage.removeItem(SK);
+        S = { settings: { cur: '₹', wdays: 26, otRate: 1.5, pf: 12, esi: 0.75, tds: 10, hra: 40, tif50: 50, tif20: 20, stayEve: '18:00', stayNight: '20:00', noonCut: '12:00', graceGent: '06:10', graceWomen: '06:20', graceSpecial: '06:30', tPf: true, tEsi: false, tTds: false, tHra: true, tAdv: true, tRound: true }, staff: [], bank: [], tiffin: [], tifResults: null, currentStaff: null, bankPreset: 'auto' };
+        navigate('dashboard'); loadSettingsForm(); toast('All cleared.', 'info');
+      });
+    }
+
+    // ═══════════════════════════════
+    //  UTILS
+    // ═══════════════════════════════
+    function fmt(n) { return (S.settings?.cur || '₹') + fmtN(n); }
+    function fmtN(n) { return (parseFloat(n) || 0).toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 }); }
+
+    // ═══════════════════════════════
+    //  INIT
+    // ═══════════════════════════════
+    document.addEventListener('DOMContentLoaded', () => {
+      load(); lucide.createIcons();
+      renderDash();
+      setBankPreset(S.bankPreset || 'auto', true); // silent — no toast on init
+
+      // Restore bank UI if saved data exists
+      if (S.bank?.length) {
+        renderBankSplit(S.bank);
+        document.getElementById('bank-pdf-strip').style.display = 'flex';
+        document.getElementById('pdf-strip-name').textContent = 'Saved Statement';
+        document.getElementById('pdf-strip-info').textContent = `${S.bank.length} saved transactions`;
+      }
+
+      // Restore tiffin UI if saved results exist
+      if (S.tifResults?.length) {
+        renderTifAccordion(S.tifResults);
+        const ts = S.tifResults.reduce((a, r) => a + r.total, 0);
+        document.getElementById('tif-summary-bar').style.display = 'block';
+        document.getElementById('tif-pdf-strip').style.display = 'flex';
+        document.getElementById('tif-strip-name').textContent = 'Saved Tiffin Data';
+        document.getElementById('tif-strip-info').textContent =
+          `${S.tifResults.length} staff · ${S.tiffin?.length || 0} records`;
+        document.getElementById('ts-staff').textContent = S.tifResults.length;
+        document.getElementById('ts-total').textContent = fmt(ts);
+        document.getElementById('ts-50').textContent = S.tifResults.reduce((a, r) => a + r.morningDays, 0);
+        document.getElementById('ts-20').textContent = S.tifResults.reduce((a, r) => a + r.eveningDays, 0);
+        document.getElementById('ts-70').textContent = S.tifResults.reduce((a, r) => a + r.bothDays, 0);
+      }
+
+      document.getElementById('staff-count').textContent = S.staff.length;
+      updateStorage();
+      updateTifRuleDisplay();
+      document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); exportAll(); } });
+    });
+  </script>
+</body>
+
+</html>
