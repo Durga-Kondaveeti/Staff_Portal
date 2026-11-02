@@ -873,7 +873,7 @@
   <!-- ══ SIDEBAR ══ -->
   <aside id="sidebar">
     <div class="sb-logo">
-      <h2>🙏 Durga Shankar is God</h2>
+      <h2></h2>
       <p>Staff Management Portal v3.0</p>
     </div>
     <nav style="flex:1;padding:10px 0;overflow-y:auto;">
@@ -924,7 +924,7 @@
     </button>
     <div>
       <div class="tb-title">Staff Portal</div>
-      <div class="tb-sub">DURGA SHANKAR IS GOD</div>
+      <div class="tb-sub">SDM</div>
     </div>
     <div class="tb-right">
       <span class="page-badge" id="page-badge">Dashboard</span>
@@ -945,7 +945,7 @@
         </div>
         <h1
           style="font-size:1.7rem;font-weight:800;background:linear-gradient(90deg,#FFB300,#FF6B00);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
-          🙏 Durga Shankar is God</h1>
+          SDM</h1>
         <p style="color:rgba(255,255,255,.6);font-size:.85rem;margin-top:8px;">Bank Statement PDFs, Staff Payroll,
           Tiffin Allowances — all stored in your browser.</p>
       </div>
@@ -2739,7 +2739,7 @@
   tr:last-child td{border:none;font-weight:800;font-size:.92rem;background:#fff9f5;color:#FF6B00;}
   footer{text-align:center;font-size:.64rem;color:#94a3b8;margin-top:18px;padding-top:12px;border-top:1px solid #f1f5f9;}
   </style></head><body>
-  <div class="h"><h1>🙏 Durga Shankar is God</h1><p>Staff Portal · Pay Slip</p></div>
+  <div class="h"><h1>SDM</h1><p>Staff Portal · Pay Slip</p></div>
   <div class="g">
     <div class="ic"><div class="il">Name</div><div class="iv">${s.name}</div></div>
     <div class="ic"><div class="il">Role</div><div class="iv">${s.role || 'Staff'}</div></div>
@@ -2750,7 +2750,7 @@
   </div>
   <table><tr><th>Description</th><th>Amount</th></tr>
   ${calc.rows.map(r => `<tr><td>${r.label}</td><td class="${r.sign === '+' ? 'cr' : r.sign === '-' ? 'dr' : ''}">${r.sign || ''}${c}${fmtN(Math.abs(r.value))}</td></tr>`).join('')}
-  </table><footer>Durga Shankar is God</footer></body></html>`;
+  </table><footer>SDM</footer></body></html>`;
       const w = window.open('', '_blank', 'width=680,height=760'); w.document.write(html); w.document.close(); w.print();
     }
     function exportPayrollExcel() {
